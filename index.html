@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>練球碼數本</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="練球">
+<meta name="theme-color" content="#F2F5F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1511" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: one-column yardage-book app, entry pad on top, fixed tab bar at the bottom */
+:root{
+  --bg:#F2F5F0; --surface:#FFFFFF; --ink:#15231B; --muted:#5D6B62; --line:#D9E0D8;
+  --green:#1E5A39; --on-green:#FFFFFF; --green-soft:#E3EEE6;
+  --flag:#E5AE16; --on-flag:#2E2200; --danger:#B3261E;
+  --num:"Barlow Condensed","Noto Sans TC",system-ui,sans-serif;
+  --body:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1511; --surface:#16201A; --ink:#E4ECE6; --muted:#93A198; --line:#29372E;
+  --green:#4FA374; --on-green:#0B130E; --green-soft:#1D2D23;
+  --flag:#F0C23A; --on-flag:#241A00; --danger:#F2786D; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1511; --surface:#16201A; --ink:#E4ECE6; --muted:#93A198; --line:#29372E;
+  --green:#4FA374; --on-green:#0B130E; --green-soft:#1D2D23;
+  --flag:#F0C23A; --on-flag:#241A00; --danger:#F2786D; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  margin:0;padding-block:calc(12px + env(safe-area-inset-top,0px)) calc(84px + env(safe-area-inset-bottom,0px));-webkit-tap-highlight-color:transparent}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-top:6px}
+h1{font-size:22px;margin:0;letter-spacing:.02em;text-wrap:balance}
+.sub{color:var(--muted);font-size:13px}
+.badge{font-family:var(--num);font-size:15px;font-weight:600;background:var(--green-soft);color:var(--green);padding:2px 10px;border-radius:99px;white-space:nowrap}
+.label{font-size:12px;color:var(--muted);letter-spacing:.08em;margin-bottom:8px;font-weight:500}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--flag);outline-offset:2px}
+.clubs{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 0;font-family:var(--num);font-size:20px;font-weight:600;text-align:center;min-width:0}
+.pctgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.chip.pct{font-size:18px;padding:8px 0}
+.chip[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--on-green)}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.seg.two{grid-template-columns:1fr 1fr}
+.seg button{border:0;background:transparent;padding:11px 4px;font-size:14px;font-weight:500;border-left:1px solid var(--line)}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed="true"]{background:var(--green);color:var(--on-green)}
+.toggle{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;width:100%;text-align:left}
+.toggle .sw{width:44px;height:26px;border-radius:99px;background:var(--line);position:relative;transition:background .15s}
+.toggle .sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--surface);transition:transform .15s}
+.toggle[aria-pressed="true"] .sw{background:var(--flag)}
+.toggle[aria-pressed="true"] .sw::after{transform:translateX(18px)}
+.entry{display:grid;grid-template-columns:1fr 1fr 0.8fr;gap:10px;align-items:end}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:12px;color:var(--muted)}
+.field input{width:100%;min-width:0;font-family:var(--num);font-size:34px;font-weight:600;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);text-align:center}
+.total{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;background:var(--green-soft);padding:6px 4px;height:100%;min-height:60px}
+.total small{font-size:12px;color:var(--muted)}
+.total b{font-family:var(--num);font-size:30px;font-weight:700;color:var(--green);line-height:1.1}
+.save{width:100%;border:0;border-radius:12px;background:var(--flag);color:var(--on-flag);font-size:18px;font-weight:700;padding:15px;letter-spacing:.1em}
+.save:disabled{opacity:.45}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+.combo{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.combo h3{margin:0;font-size:15px}
+.avg{font-family:var(--num);font-size:16px;color:var(--muted)}
+.avg b{color:var(--ink);font-size:20px}
+.shots{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.shots li{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.shots li:first-child{border-top:0}
+.shots .d{color:var(--muted);font-size:13px}
+.shots .n{font-family:var(--num);font-size:19px;font-weight:600}
+.shots .n span{color:var(--muted);font-weight:500;font-size:15px}
+.del{border:1px solid var(--line);background:transparent;border-radius:8px;padding:4px 10px;font-size:13px;color:var(--muted)}
+.del.arm{border-color:var(--danger);color:var(--danger)}
+.empty{color:var(--muted);font-size:14px;padding:6px 0}
+.tablebox{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:420px;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);padding:0;text-align:center}
+tr:last-child td,tr:last-child th{border-bottom:0}
+thead th{font-size:12px;color:var(--muted);font-weight:500;padding:8px 4px;background:var(--surface)}
+tbody th{font-family:var(--num);font-size:20px;font-weight:600;padding:0 10px;position:sticky;left:0;background:var(--surface);border-right:1px solid var(--line)}
+td button{width:100%;border:0;background:transparent;padding:8px 2px;display:flex;flex-direction:column;align-items:center;gap:0}
+td .c{font-family:var(--num);font-size:24px;font-weight:700;line-height:1.1}
+td .t{font-size:11px;color:var(--muted)}
+section>.label+.tablebox{margin-bottom:16px}
+td .none{color:var(--line);font-size:18px}
+.entry.two{grid-template-columns:1fr 1fr}
+.picks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.picks li{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.picks li.best{border:2px solid var(--flag)}
+.pk-main{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.pk-club{font-family:var(--num);font-size:28px;font-weight:700;line-height:1}
+.pk-sw{font-weight:500}
+.tag{font-size:11.5px;padding:1px 8px;border-radius:99px;background:var(--line);color:var(--muted);margin-left:auto}
+.tag.ok{background:var(--green-soft);color:var(--green)}
+.pk-nums{display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pk-nums b{font-family:var(--num);font-size:20px;color:var(--ink)}
+.pk-nums em{font-style:normal;font-size:12.5px;color:var(--green)}
+.pk-rng{font-size:12.5px}
+.note{font-size:12.5px;color:var(--muted);line-height:1.6}
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);
+  padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);z-index:5}
+.tabs button{border:0;background:transparent;padding:12px 0 14px;font-size:14px;font-weight:500;color:var(--muted);border-top:3px solid transparent}
+.tabs button[aria-selected="true"]{color:var(--green);border-top-color:var(--flag)}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:8;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:560px;max-height:80%;overflow:auto;border-radius:16px 16px 0 0;
+  padding:16px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sheet-head h2{margin:0;font-size:18px}
+.x{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:4px 12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center}
+.stat small{display:block;font-size:11.5px;color:var(--muted)}
+.stat b{font-family:var(--num);font-size:24px}
+.clublist{list-style:none;margin:0;padding:0}
+.clublist li{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
+.clublist li:first-child{border-top:0}
+.clublist .nm{flex:1;font-family:var(--num);font-size:20px;font-weight:600}
+.mini{border:1px solid var(--line);background:var(--bg);border-radius:8px;width:36px;height:32px}
+.addrow{display:flex;gap:8px;margin-top:10px}
+.addrow input{flex:1;min-width:0;font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.btn{border:1px solid var(--green);background:var(--green);color:var(--on-green);border-radius:8px;padding:8px 14px;font-weight:500}
+.btn.ghost{background:transparent;color:var(--green)}
+textarea{width:100%;min-height:120px;font:12px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);padding:8px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;font-size:14px;z-index:9;white-space:nowrap}
+.status{font-size:12.5px;color:var(--muted)}
+.status.warn{color:var(--danger)}
+@media (max-width:360px){.clubs{grid-template-columns:repeat(4,1fr)}.field input{font-size:28px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app"><p class="sub">載入中…</p></div>
+<nav class="tabs" role="tablist" id="tabs">
+  <button id="tab-log" role="tab" data-view="log">記錄</button>
+  <button id="tab-table" role="tab" data-view="table">距離表</button>
+  <button id="tab-pick" role="tab" data-view="pick">選桿</button>
+  <button id="tab-set" role="tab" data-view="set">設定</button>
+</nav>
+<div id="sheet"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+const SWINGS=[{k:'power',n:'出力全揮'},{k:'full',n:'正常全揮'},{k:'three',n:'3/4 揮'},{k:'half',n:'半揮'}];
+const SW=Object.fromEntries(SWINGS.map(s=>[s.k,s.n]));
+const isWedge=c=>/°$/.test(String(c).trim());
+const swName=k=>k.startsWith('pct')?k.slice(3)+'%':(SW[k]||k);
+function wedgeKeys(extraFromData){
+  const keys=S.pcts.map(p=>'pct'+p);
+  if(extraFromData){for(const s of allShots())if(s.swing.startsWith('pct')&&!keys.includes(s.swing))keys.push(s.swing);
+    keys.sort((a,b)=>+b.slice(3)-+a.slice(3));}
+  return keys;
+}
+function swingsFor(club){return isWedge(club)?wedgeKeys(false).map(k=>({k,n:swName(k)})):SWINGS}
+const NEW_WOODS=['1W','3W','3H','4H'];
+const DEFAULT_PCTS=[100,90,80,70,60,50,40,30,20,10];
+const DEFAULT_CLUBS=['1W','3W','3H','4H','5i','6i','7i','8i','9i','PW','48°','54°','58°'];
+const LS_KEY='yardbook-v1';
+const YD_PER_M=1.0936;
+
+const S={clubs:DEFAULT_CLUBS.slice(),unit:'yd',pcts:DEFAULT_PCTS.slice(),sessions:{},view:'log',face:'square',
+  sel:{club:'7i',swing:'full',open:false},pick:{carry:'',total:''},mode:'loading',armed:null,detail:null};
+
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const dayId=d=>`s-${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const fmtDate=t=>{const d=new Date(t);return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`};
+const toDisp=yd=>S.unit==='m'?yd/YD_PER_M:yd;
+const fromIn=v=>S.unit==='m'?v*YD_PER_M:v;
+const r0=v=>Math.round(toDisp(v));
+const U=()=>S.unit==='m'?'公尺':'碼';
+
+/* ---------- storage: this device first, synced through a private GitHub Gist ---------- */
+const LS_DATA='yardbook-gh-data', LS_CFG='yardbook-gh-sync', GIST_FILE='yardbook-data.json', GH='https://api.github.com';
+let D={shots:{},deleted:{},settings:null};
+const sync={token:'',gistId:'',last:0,rev:0,busy:false,status:'off',timer:null};
+function loadCfg(){try{const v=JSON.parse(localStorage.getItem(LS_CFG)||'{}');sync.token=v.token||'';sync.gistId=v.gistId||'';sync.last=v.last||0}catch(e){}}
+function saveCfg(){try{localStorage.setItem(LS_CFG,JSON.stringify({token:sync.token,gistId:sync.gistId,last:sync.last}))}catch(e){}}
+function saveLocalData(){try{localStorage.setItem(LS_DATA,JSON.stringify(D))}catch(e){toast('手機儲存空間不足，請先匯出備份')}}
+function applySettings(st){if(!st)return;S.clubs=(st.clubs||DEFAULT_CLUBS).slice();S.unit=st.unit||'yd';S.pcts=(st.pcts||DEFAULT_PCTS).slice();fixSel()}
+function rebuild(){const ss={};for(const id in D.shots){if(D.deleted[id])continue;const s=D.shots[id];const k=dayId(new Date(s.t));(ss[k]=ss[k]||{shots:[]}).shots.push(s)}S.sessions=ss}
+function changed(){saveLocalData();sync.rev++;scheduleSync(2000)}
+function persistSettings(){D.settings={clubs:S.clubs.slice(),unit:S.unit,pcts:S.pcts.slice(),updated:Date.now()};changed()}
+function loadLocal(){
+  try{const v=JSON.parse(localStorage.getItem(LS_DATA)||'null');if(v)D={shots:v.shots||{},deleted:v.deleted||{},settings:v.settings||null}}catch(e){}
+  if(D.settings)applySettings(D.settings);
+  rebuild();
+}
+function merge(a,b){
+  const out={shots:Object.assign({},a.shots,b.shots),deleted:Object.assign({},a.deleted,b.deleted),settings:null};
+  for(const id in out.deleted)delete out.shots[id];
+  const sa=a.settings,sb=b.settings;out.settings=!sa?sb||null:!sb?sa:(sb.updated>sa.updated?sb:sa);
+  return out;
+}
+const sig=x=>Object.keys(x.shots||{}).length+'|'+Object.keys(x.deleted||{}).length+'|'+(x.settings?x.settings.updated:0);
+async function gh(path,opt={}){
+  const headers={'Authorization':'Bearer '+sync.token,'Accept':'application/vnd.github+json'};
+  if(opt.body)headers['Content-Type']='application/json';
+  const r=await fetch(GH+path,Object.assign({},opt,{headers,cache:'no-store'}));
+  if(r.status===401||r.status===403)throw new Error('auth');
+  if(r.status===404)throw new Error('missing');
+  if(!r.ok)throw new Error('http');
+  return r.json();
+}
+async function findGist(){
+  for(let page=1;page<=10;page++){const list=await gh(`/gists?per_page=100&page=${page}`);
+    const g=list.find(x=>x.files&&x.files[GIST_FILE]);if(g)return g.id;if(list.length<100)break}
+  return '';
+}
+async function readGist(){
+  const g=await gh('/gists/'+sync.gistId);const f=g.files&&g.files[GIST_FILE];
+  if(!f)return{shots:{},deleted:{},settings:null};
+  let txt=f.content;if(f.truncated){const r=await fetch(f.raw_url,{cache:'no-store'});txt=await r.text()}
+  try{const v=JSON.parse(txt);return{shots:v.shots||{},deleted:v.deleted||{},settings:v.settings||null}}catch(e){return{shots:{},deleted:{},settings:null}}
+}
+function scheduleSync(ms){if(!sync.token)return;clearTimeout(sync.timer);sync.timer=setTimeout(doSync,ms)}
+async function doSync(){
+  if(!sync.token)return;
+  if(sync.busy){scheduleSync(1500);return}
+  if(!navigator.onLine){sync.status='offline';renderSync();return}
+  sync.busy=true;sync.status='syncing';renderSync();
+  const revAtStart=sync.rev;
+  try{
+    if(!sync.gistId){sync.gistId=await findGist();saveCfg()}
+    if(!sync.gistId){
+      const g=await gh('/gists',{method:'POST',body:JSON.stringify({description:'練球碼數本 同步資料（請勿刪除）',public:false,files:{[GIST_FILE]:{content:JSON.stringify(D)}}})});
+      sync.gistId=g.id;
+    }else{
+      let remote;
+      try{remote=await readGist()}catch(e){if(e.message==='missing'){sync.gistId='';saveCfg();throw new Error('retry')}throw e}
+      const before=sig(D), m=merge(remote,D);
+      D=m;saveLocalData();
+      if(sig(m)!==before){if(D.settings)applySettings(D.settings);rebuild();render()}
+      if(sig(m)!==sig(remote))await gh('/gists/'+sync.gistId,{method:'PATCH',body:JSON.stringify({files:{[GIST_FILE]:{content:JSON.stringify(m)}}})});
+    }
+    sync.last=Date.now();sync.status='ok';
+  }catch(e){sync.status=e.message==='auth'?'auth':'error';if(e.message==='retry')scheduleSync(500)}
+  finally{
+    sync.busy=false;saveCfg();
+    if(sync.rev!==revAtStart&&sync.status==='ok')scheduleSync(800);
+    renderSync();
+  }
+}
+function syncText(){
+  const ago=sync.last?fmtDate(sync.last):'';
+  if(!sync.token)return['warn','尚未設定同步，紀錄只存在這台裝置。到「設定」連結 GitHub 後，所有裝置都能看到同一份紀錄。'];
+  if(sync.status==='syncing')return['','同步中…'];
+  if(sync.status==='offline')return['warn','目前離線，紀錄先存在這台裝置，有網路時會自動同步。'];
+  if(sync.status==='auth')return['warn','GitHub 金鑰無效或已過期，請到「設定」重新貼上。'];
+  if(sync.status==='error')return['warn','同步失敗，紀錄已存在這台裝置，稍後會再試。'];
+  return['',`已同步${ago?'（'+ago+'）':''}`];
+}
+function renderSync(){const el=document.getElementById('syncline');if(el){const[c,t]=syncText();el.className='status '+c;el.textContent=t}
+  const st=document.getElementById('sync-state');if(st)st.textContent=syncText()[1];}
+function init(){
+  loadCfg();loadLocal();S.mode='gh';fixSel();render();
+  if(sync.token)doSync();
+  window.addEventListener('online',()=>scheduleSync(300));
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')scheduleSync(300)});
+}
+function migrate(){S.clubs=NEW_WOODS.filter(c=>!S.clubs.includes(c)).concat(S.clubs);S.pcts=DEFAULT_PCTS.slice()}
+function fixSel(){if(!S.clubs.includes(S.sel.club))S.sel.club=S.clubs[0]||'';const ks=swingsFor(S.sel.club).map(x=>x.k);if(!ks.includes(S.sel.swing))S.sel.swing=isWedge(S.sel.club)?ks[0]:'full'}
+
+/* ---------- data helpers ---------- */
+function allShots(){const out=[];for(const id in S.sessions)for(const s of S.sessions[id].shots)out.push(s);return out.sort((a,b)=>b.t-a.t)}
+function trimmedAvg(arr){if(!arr.length)return null;const a=arr.slice().sort((x,y)=>x-y);const b=a.length>=5?a.slice(1,-1):a;return b.reduce((x,y)=>x+y,0)/b.length}
+function statsFor(shots){return{n:shots.length,carry:trimmedAvg(shots.map(s=>s.carry)),total:trimmedAvg(shots.map(s=>s.carry+s.roll)),
+  min:shots.length?Math.min(...shots.map(s=>s.carry)):null,max:shots.length?Math.max(...shots.map(s=>s.carry)):null}}
+function match(club,swing,open){return allShots().filter(s=>s.club===club&&s.swing===swing&&!!s.open===!!open)}
+
+/* ---------- club picker ---------- */
+// Starting estimates (total yards, normal full swing) used only until a combo has its own shots.
+const EST={'1W':230,'3W':210,'3H':190,'4H':180,'5i':165,'6i':155,'7i':145,'8i':135,'9i':125,'PW':115,'48°':107,'54°':92,'58°':78};
+const ROLL_SHARE=c=>/W$/.test(c)?0.12:/H$/.test(c)?0.08:isWedge(c)?0.03:0.06;
+function candidates(){
+  const out=[];
+  const extra=[...new Set(allShots().map(s=>s.club))].filter(c=>!S.clubs.includes(c));
+  for(const club of S.clubs.concat(extra)){
+    const keys=isWedge(club)?wedgeKeys(true):SWINGS.map(x=>x.k);
+    for(const k of keys)for(const open of [false,true]){
+      const st=statsFor(match(club,k,open));
+      if(st.n)out.push({club,swing:k,open,carry:st.carry,total:st.total,n:st.n,min:st.min,max:st.max,est:false});
+      else if(!open&&(k==='full'||k==='pct100')&&EST[club]&&S.clubs.includes(club)){
+        const t=EST[club];out.push({club,swing:k,open,carry:t*(1-ROLL_SHARE(club)),total:t,n:0,est:true});}
+    }
+  }
+  return out;
+}
+function recommend(tc,tt){
+  return candidates().map(c=>{
+    let err=tc!=null?Math.abs(c.carry-tc)+(tt!=null?0.5*Math.abs(c.total-tt):0):Math.abs(c.total-tt);
+    if(c.est)err+=4; else if(c.n<3)err+=2;
+    return{...c,err};
+  }).sort((a,b)=>a.err-b.err).slice(0,5);
+}
+function viewPickResults(){
+  const tc=num(S.pick.carry),tt=num(S.pick.total);
+  if(tc==null&&tt==null)return `<p class="empty">輸入目標距離後，這裡會依你的紀錄推薦球桿和揮法。</p>`;
+  const tcY=tc!=null?fromIn(tc):null, ttY=tt!=null?fromIn(tt):null;
+  const list=recommend(tcY,ttY);
+  if(!list.length)return `<p class="empty">還沒有可以比對的紀錄。</p>`;
+  const diff=(v,t)=>{const d=Math.round(toDisp(v)-toDisp(t));return d===0?'剛好':d>0?`多 ${d}`:`少 ${-d}`};
+  return `<ol class="picks">${list.map((c,i)=>`<li class="${i===0?'best':''}">
+    <div class="pk-main"><span class="pk-club">${esc(c.club)}</span><span class="pk-sw">${swName(c.swing)}${c.open?'・開桿面':''}</span>
+      ${c.est?'<span class="tag">預估</span>':`<span class="tag ok">${c.n} 球</span>`}</div>
+    <div class="pk-nums"><span>carry <b>${r0(c.carry)}</b>${tcY!=null?` <em>${diff(c.carry,tcY)}</em>`:''}</span>
+      <span>總 <b>${r0(c.total)}</b>${ttY!=null?` <em>${diff(c.total,ttY)}</em>`:''}</span>
+      ${c.n?`<span class="pk-rng">carry 範圍 ${r0(c.min)}–${r0(c.max)}</span>`:''}</div></li>`).join('')}</ol>`;
+}
+function viewPick(){
+  return `<header><div><h1>選桿</h1><div class="sub">輸入目標距離，推薦最接近的球桿與揮法</div></div></header>
+  <section class="entry two">
+    <div class="field"><label for="pk-carry">目標 carry（${U()}）</label><input id="pk-carry" inputmode="decimal" autocomplete="off" placeholder="選填" value="${esc(S.pick.carry)}"></div>
+    <div class="field"><label for="pk-total">目標總距離（${U()}）</label><input id="pk-total" inputmode="decimal" autocomplete="off" placeholder="選填" value="${esc(S.pick.total)}"></div>
+  </section>
+  <p class="note">要飛過障礙或停在果嶺前段時填 carry；只在乎落點總距離時填總距離就好。兩個都填會以 carry 為主、總距離為輔。</p>
+  <div id="pick-res">${viewPickResults()}</div>
+  <p class="note">推薦依你自己的紀錄計算，球數越多越準。標示「預估」的是還沒有紀錄的球桿，用一般距離估算，只當參考。</p>${statusLine()}`;
+}
+
+/* ---------- actions ---------- */
+function addShot(carry,roll){
+  const now=new Date(),id=dayId(now);
+  const shot={id:now.getTime().toString(36)+Math.random().toString(36).slice(2,6),t:now.getTime(),club:S.sel.club,swing:S.sel.swing,open:S.sel.open,
+    carry:Math.round(fromIn(carry)*10)/10,roll:Math.round(fromIn(roll)*10)/10};
+  D.shots[shot.id]=shot;rebuild();changed();
+  toast(`已記錄 ${S.sel.club} ${swName(S.sel.swing)}${S.sel.open?'・開桿面':''}　${carry}+${roll}`);
+}
+function deleteShot(shotId){
+  D.deleted[shotId]=Date.now();delete D.shots[shotId];rebuild();changed();
+  S.armed=null;render();
+}
+
+let tt;function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.hidden=false;clearTimeout(tt);tt=setTimeout(()=>el.hidden=true,1800)}
+
+/* ---------- views ---------- */
+function shotRow(s,withMeta){
+  const tot=r0(s.carry+s.roll);
+  const meta=withMeta?`${esc(s.club)}・${swName(s.swing)}${s.open?'・開':''}`:'';
+  return `<li><span class="d">${fmtDate(s.t)}${meta?'<br>'+meta:''}</span>
+    <span class="n">${r0(s.carry)}<span> +${r0(s.roll)} = ${tot}</span></span>
+    <button class="del ${S.armed===s.id?'arm':''}" data-del="${s.id}">${S.armed===s.id?'確定刪除':'刪除'}</button></li>`;
+}
+function viewLog(){
+  const today=(S.sessions[dayId(new Date())]||{shots:[]}).shots.length;
+  const combo=match(S.sel.club,S.sel.swing,S.sel.open), st=statsFor(combo);
+  return `<header><div><h1>練球碼數本</h1><div class="sub">每一球記下 carry 和滾動</div></div><span class="badge">今天 ${today} 球</span></header>
+  <section><div class="label">球桿</div><div class="clubs">${S.clubs.map(c=>`<button class="chip" data-club="${esc(c)}" aria-pressed="${c===S.sel.club}">${esc(c)}</button>`).join('')}</div></section>
+  <section><div class="label">${isWedge(S.sel.club)?'揮桿幅度':'揮桿'}</div>${isWedge(S.sel.club)
+    ?`<div class="pctgrid">${swingsFor(S.sel.club).map(s=>`<button class="chip pct" data-swing="${s.k}" aria-pressed="${s.k===S.sel.swing}">${s.n}</button>`).join('')}</div>`
+    :`<div class="seg">${SWINGS.map(s=>`<button data-swing="${s.k}" aria-pressed="${s.k===S.sel.swing}">${s.n}</button>`).join('')}</div>`}</section>
+  <button class="toggle" id="open-t" aria-pressed="${S.sel.open}"><span>開桿面</span><span class="sw"></span></button>
+  <section class="entry">
+    <div class="field"><label for="in-carry">Carry（${U()}）</label><input id="in-carry" inputmode="decimal" enterkeyhint="next" autocomplete="off" placeholder="0"></div>
+    <div class="field"><label for="in-roll">滾動（${U()}）</label><input id="in-roll" inputmode="decimal" enterkeyhint="done" autocomplete="off" placeholder="0"></div>
+    <div class="total"><small>總距離</small><b id="tot">—</b></div>
+  </section>
+  <button class="save" id="save" disabled>記錄這一球</button>
+  <section class="card"><div class="combo"><h3>${esc(S.sel.club)}・${swName(S.sel.swing)}${S.sel.open?'・開桿面':''}</h3>
+    ${st.n?`<span class="avg">平均 <b>${r0(st.carry)}</b> carry・總 <b>${r0(st.total)}</b>・${st.n} 球</span>`:''}</div>
+    ${combo.length?`<ul class="shots">${combo.slice(0,8).map(s=>shotRow(s)).join('')}</ul>`:`<p class="empty">這個組合還沒有紀錄。打一球，輸入 carry 和滾動後按「記錄這一球」。</p>`}
+  </section>${statusLine()}`;
+}
+function viewTable(){
+  const extra=[...new Set(allShots().map(s=>s.club))].filter(c=>!S.clubs.includes(c));
+  const clubs=S.clubs.concat(extra), open=S.face==='open';
+  const tbl=(list,cols,cap)=>list.length?`<div class="label">${cap}</div><div class="tablebox"><table style="min-width:${Math.max(420,70+cols.length*64)}px"><thead><tr><th></th>${cols.map(s=>`<th scope="col">${s.n}</th>`).join('')}</tr></thead><tbody>${list.map(c=>`<tr><th scope="row">${esc(c)}</th>${cols.map(s=>{
+    const st=statsFor(match(c,s.k,open));
+    return `<td><button data-cell="${esc(c)}|${s.k}">${st.n?`<span class="c">${r0(st.carry)}</span><span class="t">總 ${r0(st.total)}・${st.n}球</span>`:'<span class="none">—</span>'}</button></td>`}).join('')}</tr>`).join('')}</tbody></table></div>`:'';
+  const irons=clubs.filter(c=>!isWedge(c)), wedges=clubs.filter(isWedge);
+  const rows=tbl(irons,SWINGS,'鐵桿與木桿')+tbl(wedges,wedgeKeys(true).map(k=>({k,n:swName(k)})),'挖起桿（揮桿幅度）');
+  const any=allShots().length;
+  return `<header><div><h1>距離表</h1><div class="sub">大字是平均 carry，單位：${U()}</div></div></header>
+  <div class="seg two"><button data-face="square" aria-pressed="${!open}">標準桿面</button><button data-face="open" aria-pressed="${open}">開桿面</button></div>
+  <section>${rows}</section>
+  <p class="note">${any?'點任一格看每一球的明細，也可以在那裡刪除打錯的紀錄。':'還沒有任何紀錄。到「記錄」頁打幾球，這裡就會自動算出每支桿、每種揮法的平均距離。'}
+  同一組超過 5 球時，平均會去掉最遠和最近各一球，比較接近你實際能穩定打出的距離。</p>${statusLine()}`;
+}
+function viewSet(){
+  return `<header><div><h1>設定</h1><div class="sub">球桿清單、單位與匯出</div></div></header>
+  <section class="card"><div class="label">我的球桿（依序顯示）</div>
+    <ul class="clublist">${S.clubs.map((c,i)=>`<li><span class="nm">${esc(c)}</span>
+      <button class="mini" data-up="${i}" aria-label="上移 ${esc(c)}" ${i?'':'disabled'}>↑</button>
+      <button class="mini" data-down="${i}" aria-label="下移 ${esc(c)}" ${i<S.clubs.length-1?'':'disabled'}>↓</button>
+      <button class="mini" data-rm="${i}" aria-label="移除 ${esc(c)}">✕</button></li>`).join('')}</ul>
+    <form class="addrow" id="addform"><input id="add-club" maxlength="8" placeholder="例如 1W、3W、4H、60°"><button class="btn" type="submit">加入</button></form>
+    <p class="note">移除球桿不會刪掉它的舊紀錄，距離表仍會顯示在最下方。</p></section>
+  <section class="card"><div class="label">多裝置同步（GitHub）</div>
+    ${sync.token?`<p class="note" id="sync-state">${syncText()[1]}</p>
+      <div class="addrow"><button class="btn" id="sync-now" type="button">立即同步</button>
+      <button class="btn ghost" id="sync-off" type="button">${S.armed==='sync-off'?'確定中斷這台裝置':'中斷這台裝置'}</button></div>
+      <p class="note">每台裝置都貼上同一把金鑰，就會自動找到同一份資料。中斷只會移除這台裝置上的金鑰，雲端資料不會刪除。</p>`
+    :`<p class="note">貼上 GitHub 金鑰（只需要 gist 權限）後，紀錄會存到你帳號裡的私人 Gist，手機、平板、電腦都會同步。</p>
+      <form class="addrow" id="tokenform"><input id="token-in" type="password" autocomplete="off" placeholder="ghp_ 開頭的金鑰"><button class="btn" type="submit">連結</button></form>`}
+  </section>
+  <section class="card"><div class="label">挖起桿揮桿幅度（%）</div>
+    <form class="addrow" id="pctform"><input id="pct-in" inputmode="decimal" value="${S.pcts.join(', ')}" aria-label="揮桿幅度百分比"><button class="btn" type="submit">儲存</button></form>
+    <p class="note">用逗號分隔，預設是 100% 到 10%，每 10% 一格。名稱以「°」結尾的球桿（如 48°、54°、58°）會用這組幅度記錄，其他球桿維持出力／正常全揮。</p></section>
+  <section class="card"><div class="label">距離單位</div>
+    <div class="seg two"><button data-unit="yd" aria-pressed="${S.unit==='yd'}">碼</button><button data-unit="m" aria-pressed="${S.unit==='m'}">公尺</button></div>
+    <p class="note">切換單位會自動換算所有舊紀錄。</p></section>
+  <section class="card"><div class="label">匯出紀錄（CSV）</div>
+    <button class="btn ghost" id="export">複製全部紀錄</button>
+    <textarea id="csv" readonly hidden></textarea>
+    <p class="note">複製後可以貼到 Excel 或 Google 試算表。</p></section>${statusLine()}`;
+}
+function statusLine(){const[c,t]=syncText();return `<p class="status ${c}" id="syncline">${t}</p>`}
+function viewDetail(){
+  if(!S.detail)return'';
+  const [club,swing]=S.detail, open=S.face==='open', shots=match(club,swing,open), st=statsFor(shots);
+  return `<div class="sheet-bg" data-close="1"><div class="sheet" role="dialog" aria-label="明細">
+    <div class="sheet-head"><h2>${esc(club)}・${swName(swing)}${open?'・開桿面':''}</h2><button class="x" data-close="1">關閉</button></div>
+    ${st.n?`<div class="stats"><div class="stat"><small>平均 carry</small><b>${r0(st.carry)}</b></div><div class="stat"><small>平均總距離</small><b>${r0(st.total)}</b></div><div class="stat"><small>carry 範圍</small><b>${r0(st.min)}–${r0(st.max)}</b></div></div>
+    <ul class="shots card">${shots.map(s=>shotRow(s)).join('')}</ul>`:`<p class="empty">這一格還沒有紀錄。</p>`}
+  </div></div>`;
+}
+
+/* ---------- render & events ---------- */
+const app=document.getElementById('app');
+function render(){
+  const keep=document.activeElement&&document.activeElement.id;
+  const c=document.getElementById('in-carry'),r=document.getElementById('in-roll');
+  const cv=c?c.value:'',rv=r?r.value:'';
+  app.innerHTML=S.mode==='loading'?'<p class="sub">載入中…</p>':S.view==='log'?viewLog():S.view==='table'?viewTable():S.view==='pick'?viewPick():viewSet();
+  document.getElementById('sheet').innerHTML=viewDetail();
+  document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.view===S.view));
+  if(S.view==='log'){const c2=document.getElementById('in-carry'),r2=document.getElementById('in-roll');if(c2){c2.value=cv;r2.value=rv;updTotal()}}
+  if(keep){const el=document.getElementById(keep);if(el&&el.tagName==='INPUT')el.focus()}
+}
+function num(v){const n=parseFloat(String(v).replace(/[^\d.]/g,''));return isNaN(n)?null:n}
+function updTotal(){
+  const c=num(document.getElementById('in-carry').value),r=num(document.getElementById('in-roll').value)||0;
+  document.getElementById('tot').textContent=c==null?'—':Math.round(c+r);
+  document.getElementById('save').disabled=c==null||c<=0;
+}
+function doSave(){
+  const ci=document.getElementById('in-carry'),ri=document.getElementById('in-roll');
+  const c=num(ci.value),r=num(ri.value)||0;if(c==null||c<=0)return;
+  addShot(c,r);ci.value='';ri.value='';render();document.getElementById('in-carry').focus();
+}
+document.addEventListener('input',e=>{
+  if(e.target.id==='in-carry'||e.target.id==='in-roll')updTotal();
+  if(e.target.id==='pk-carry'||e.target.id==='pk-total'){S.pick[e.target.id==='pk-carry'?'carry':'total']=e.target.value;document.getElementById('pick-res').innerHTML=viewPickResults()}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;
+  if(e.target.id==='in-carry'){e.preventDefault();document.getElementById('in-roll').focus()}
+  else if(e.target.id==='in-roll'){e.preventDefault();doSave()}
+});
+document.addEventListener('submit',e=>{
+  if(e.target.id==='tokenform'){e.preventDefault();const v=document.getElementById('token-in').value.trim();
+    if(!v){toast('請貼上金鑰');return}sync.token=v;sync.gistId='';saveCfg();render();doSync();return}
+  if(e.target.id==='pctform'){e.preventDefault();
+    const v=[...new Set(document.getElementById('pct-in').value.split(/[,，、\s]+/).map(x=>Math.round(parseFloat(x))).filter(n=>n>0&&n<=150))].sort((a,b)=>b-a);
+    if(!v.length){toast('請輸入至少一個百分比');return}
+    S.pcts=v;fixSel();persistSettings();render();toast('已更新揮桿幅度');return}
+  if(e.target.id!=='addform')return;e.preventDefault();
+  const v=document.getElementById('add-club').value.trim();if(!v)return;
+  if(S.clubs.includes(v)){toast('這支球桿已經在清單裡');return}
+  S.clubs=S.clubs.concat(v);persistSettings();render();
+});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button,[data-close]');if(!b)return;const d=b.dataset;
+  if(d.view){S.view=d.view;S.armed=null;S.detail=null;render();window.scrollTo(0,0);return}
+  if(d.close&&(e.target===b||b.tagName==='BUTTON')){S.detail=null;S.armed=null;render();return}
+  if(d.club!==undefined){S.sel.club=d.club;fixSel();S.armed=null;render();return}
+  if(d.swing){S.sel.swing=d.swing;S.armed=null;render();return}
+  if(b.id==='open-t'){S.sel.open=!S.sel.open;render();return}
+  if(b.id==='save'){doSave();return}
+  if(b.id==='sync-now'){doSync();return}
+  if(b.id==='sync-off'){if(S.armed==='sync-off'){sync.token='';sync.gistId='';sync.status='off';saveCfg();S.armed=null;toast('已中斷這台裝置的同步')}else S.armed='sync-off';render();return}
+  if(d.del){if(S.armed===d.del)deleteShot(d.del);else{S.armed=d.del;render()}return}
+  if(d.face){S.face=d.face;render();return}
+  if(d.cell){S.detail=d.cell.split('|');S.armed=null;render();return}
+  if(d.unit){S.unit=d.unit;persistSettings();render();return}
+  if(d.up!==undefined){const i=+d.up,a=S.clubs.slice();[a[i-1],a[i]]=[a[i],a[i-1]];S.clubs=a;persistSettings();render();return}
+  if(d.down!==undefined){const i=+d.down,a=S.clubs.slice();[a[i+1],a[i]]=[a[i],a[i+1]];S.clubs=a;persistSettings();render();return}
+  if(d.rm!==undefined){S.clubs=S.clubs.filter((_,i)=>i!==+d.rm);fixSel();persistSettings();render();return}
+  if(b.id==='export'){
+    const rows=[['日期時間','球桿','揮桿','開桿面','carry('+U()+')','滾動('+U()+')','總距離('+U()+')']]
+      .concat(allShots().reverse().map(s=>{const t=new Date(s.t);return[`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())} ${pad(t.getHours())}:${pad(t.getMinutes())}`,s.club,swName(s.swing),s.open?'是':'否',r0(s.carry),r0(s.roll),r0(s.carry+s.roll)]}));
+    const csv=rows.map(r=>r.map(x=>/[",\n]/.test(String(x))?`"${String(x).replace(/"/g,'""')}"`:x).join(',')).join('\n');
+    const ta=document.getElementById('csv');ta.value=csv;
+    const fallback=()=>{ta.hidden=false;ta.focus();ta.select();toast('請長按選取文字後複製')};
+    try{navigator.clipboard.writeText(csv).then(()=>toast(`已複製 ${rows.length-1} 球紀錄`),fallback)}catch(err){fallback()}
+  }
+});
+init();
+if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
