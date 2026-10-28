@@ -108,6 +108,12 @@ td .none{color:var(--line);font-size:18px}
 .pk-nums b{font-family:var(--num);font-size:20px;color:var(--ink)}
 .pk-nums em{font-style:normal;font-size:12.5px;color:var(--green)}
 .pk-rng{font-size:12.5px}
+.pk-lbl{font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--flag);color:var(--on-flag)}
+.pk-lbl.alt{background:var(--green-soft);color:var(--green);font-weight:500}
+.pk-warn{font-size:13px;color:var(--danger);font-weight:500}
+.pk-why{font-size:13px;color:var(--muted);line-height:1.6}
+.logic{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted);line-height:1.6}
+.logic b{color:var(--ink)}
 .allbtn{display:flex;justify-content:space-between;align-items:center;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;font-weight:500}
 .allcount{font-family:var(--num);font-size:17px;color:var(--green)}
 .sheet.full{max-height:92%}
@@ -193,7 +199,7 @@ const LS_KEY='yardbook-v1';
 const YD_PER_M=1.0936;
 
 const S={clubs:DEFAULT_CLUBS.slice(),unit:'yd',pcts:DEFAULT_PCTS.slice(),sessions:{},view:'log',face:'square',
-  sel:{club:'7i',swing:'full',open:false},pick:{carry:'',total:''},all:{open:false,filter:'all',edit:null},mode:'loading',armed:null,detail:null};
+  sel:{club:'7i',swing:'full',open:false},pick:{carry:'',total:'',bias:(()=>{try{return localStorage.getItem('yardbook-gh-bias')||'long'}catch(e){return'long'}})()},all:{open:false,filter:'all',edit:null},mode:'loading',armed:null,detail:null};
 
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pad=n=>String(n).padStart(2,'0');
@@ -308,50 +314,86 @@ function match(club,swing,open){return allShots().filter(s=>s.club===club&&s.swi
 // Starting estimates (total yards, normal full swing) used only until a combo has its own shots.
 const EST={'1W':230,'3W':210,'3H':190,'4H':180,'5i':165,'6i':155,'7i':145,'8i':135,'9i':125,'PW':115,'48°':107,'54°':92,'58°':78};
 const ROLL_SHARE=c=>/W$/.test(c)?0.12:/H$/.test(c)?0.08:isWedge(c)?0.03:0.06;
+function sdOf(a){if(a.length<2)return null;const m=a.reduce((x,y)=>x+y,0)/a.length;return Math.sqrt(a.reduce((x,y)=>x+(y-m)**2,0)/(a.length-1))}
+function trimmed(a){const b=a.slice().sort((x,y)=>x-y);return b.length>=5?b.slice(1,-1):b}
+// Every club + swing (+ open face) you have shots for, plus starting estimates for full swings with no shots yet.
 function candidates(){
   const out=[];
-  const extra=[...new Set(allShots().map(s=>s.club))].filter(c=>!S.clubs.includes(c));
-  for(const club of S.clubs.concat(extra)){
+  for(const club of clubOrder()){
     const keys=isWedge(club)?wedgeKeys(true):SWINGS.map(x=>x.k);
     for(const k of keys)for(const open of [false,true]){
-      const st=statsFor(match(club,k,open));
-      if(st.n)out.push({club,swing:k,open,carry:st.carry,total:st.total,n:st.n,min:st.min,max:st.max,est:false});
-      else if(!open&&(k==='full'||k==='pct100')&&EST[club]&&S.clubs.includes(club)){
-        const t=EST[club];out.push({club,swing:k,open,carry:t*(1-ROLL_SHARE(club)),total:t,n:0,est:true});}
+      const sh=match(club,k,open), st=statsFor(sh);
+      if(st.n){
+        let sd=sh.length>=3?sdOf(trimmed(sh.map(x=>x.carry))):null;
+        sd=Math.max(3,sd==null?Math.max(4,0.05*st.carry):sd);
+        out.push({club,swing:k,open,carry:st.carry,total:st.total,roll:st.total-st.carry,n:st.n,sd,low:st.carry-sd,est:false});
+      }else if(!open&&(k==='full'||k==='pct100')&&EST[club]&&S.clubs.includes(club)){
+        const t=EST[club],c=t*(1-ROLL_SHARE(club)),sd=Math.max(4,0.06*c);
+        out.push({club,swing:k,open,carry:c,total:t,roll:t-c,n:0,sd,low:c-sd,est:true});
+      }
     }
   }
   return out;
 }
-function recommend(tc,tt){
-  return candidates().map(c=>{
-    let err=tc!=null?Math.abs(c.carry-tc)+(tt!=null?0.5*Math.abs(c.total-tt):0):Math.abs(c.total-tt);
-    if(c.est)err+=4; else if(c.n<3)err+=2;
-    return{...c,err};
-  }).sort((a,b)=>a.err-b.err).slice(0,5);
+// Approach-shot logic (see 設定 → 選桿邏輯).
+const SWING_PEN={full:0,three:3,half:4,power:8};
+function recommend(C,T){
+  const longFirst=S.pick.bias!=='short';
+  const w=d=>d<0?(longFirst?1.5:1)*-d:(longFirst?1:1.5)*d;   // short/long miss weighting
+  const room=C!=null&&T!=null?T-C:null;                       // roll space between carry point and target
+  const list=candidates().map(c=>{
+    const warn=[];let pass=true;
+    if(C!=null&&c.low<C){pass=false;warn.push('可能飛不過')}
+    const err=T!=null?w(c.total-T):w(c.carry-C);
+    let pen=(isWedge(c.club)?0:(SWING_PEN[c.swing]||0))+c.sd*0.3+(c.est?5:c.n<3?2:0)+(c.open?3:0);
+    if(room!=null){const over=c.roll-room;if(over>3){pen+=over*0.5;warn.push('可能滾過頭')}}
+    return Object.assign({},c,{pass,err,score:err+pen,warn,metric:T!=null?c.total:c.carry});
+  });
+  list.sort((a,b)=>(b.pass-a.pass)||(a.score-b.score));
+  if(!list.length)return null;
+  const best=list[0],rest=list.slice(1),picked=[best];
+  const longer=rest.find(x=>x.metric>best.metric+1), shorter=rest.find(x=>x.metric<best.metric-1);
+  const alts=[];
+  if(longer){alts.push(Object.assign({},longer,{label:'偏長的選擇'}));picked.push(longer)}
+  if(shorter){alts.push(Object.assign({},shorter,{label:'偏短的選擇'}));picked.push(shorter)}
+  for(const x of rest){if(alts.length>=3)break;if(!picked.includes(x)){alts.push(Object.assign({},x,{label:'其他選擇'}));picked.push(x)}}
+  return{best,alts,C,T,room};
+}
+function pickReason(c,C,T,room){
+  const d=v=>{const n=Math.round(toDisp(v));return n===0?'剛好':n>0?`+${n}`:`${n}`};
+  const parts=[];
+  if(C!=null)parts.push(c.pass?`穩定 carry 下限 ${r0(c.low)}，可飛過 ${r0(C)}（餘裕 ${d(c.low-C)}）`:(Math.round(toDisp(C-c.low))<1?`穩定 carry 下限稍低於 ${r0(C)}，打差一點可能飛不過`:`穩定 carry 下限只有 ${r0(c.low)}，比 ${r0(C)} 少 ${Math.round(toDisp(C-c.low))}`));
+  if(T!=null)parts.push(`平均總距離 ${r0(c.total)}，離目標 ${d(c.total-T)}`);
+  else parts.push(`平均 carry ${r0(c.carry)}，離目標 ${d(c.carry-C)}`);
+  if(room!=null)parts.push(`平常滾 ${r0(c.roll)}，可滾空間 ${r0(room)}`);
+  parts.push(c.est?'尚無紀錄，用一般距離估算':`落差約 ±${Math.round(toDisp(c.sd))}・${c.n} 球`);
+  return parts.join('；');
+}
+function pickCard(c,res,head){
+  return `<li class="${head?'best':''}">
+    <div class="pk-main">${head?'<span class="pk-lbl">首選</span>':`<span class="pk-lbl alt">${c.label}</span>`}
+      <span class="pk-club">${esc(c.club)}</span><span class="pk-sw">${swName(c.swing)}${c.open?'・開桿面':''}</span>
+      ${c.est?'<span class="tag">預估</span>':`<span class="tag ok">${c.n} 球</span>`}</div>
+    ${c.warn.length?`<div class="pk-warn">⚠ ${c.warn.join('、')}</div>`:''}
+    <div class="pk-why">${pickReason(c,res.C,res.T,res.room)}</div></li>`;
 }
 function viewPickResults(){
   const tc=num(S.pick.carry),tt=num(S.pick.total);
-  if(tc==null&&tt==null)return `<p class="empty">輸入目標距離後，這裡會依你的紀錄推薦球桿和揮法。</p>`;
-  const tcY=tc!=null?fromIn(tc):null, ttY=tt!=null?fromIn(tt):null;
-  const list=recommend(tcY,ttY);
-  if(!list.length)return `<p class="empty">還沒有可以比對的紀錄。</p>`;
-  const diff=(v,t)=>{const d=Math.round(toDisp(v)-toDisp(t));return d===0?'剛好':d>0?`多 ${d}`:`少 ${-d}`};
-  return `<ol class="picks">${list.map((c,i)=>`<li class="${i===0?'best':''}">
-    <div class="pk-main"><span class="pk-club">${esc(c.club)}</span><span class="pk-sw">${swName(c.swing)}${c.open?'・開桿面':''}</span>
-      ${c.est?'<span class="tag">預估</span>':`<span class="tag ok">${c.n} 球</span>`}</div>
-    <div class="pk-nums"><span>carry <b>${r0(c.carry)}</b>${tcY!=null?` <em>${diff(c.carry,tcY)}</em>`:''}</span>
-      <span>總 <b>${r0(c.total)}</b>${ttY!=null?` <em>${diff(c.total,ttY)}</em>`:''}</span>
-      ${c.n?`<span class="pk-rng">carry 範圍 ${r0(c.min)}–${r0(c.max)}</span>`:''}</div></li>`).join('')}</ol>`;
+  if(tc==null&&tt==null)return `<p class="empty">輸入目標距離後，這裡會推薦攻果嶺的球桿和揮法。</p>`;
+  const res=recommend(tc!=null?fromIn(tc):null,tt!=null?fromIn(tt):null);
+  if(!res)return `<p class="empty">還沒有可以比對的紀錄。</p>`;
+  const mode=tc!=null&&tt!=null?'飛過障礙＋停在目標附近':tc!=null?'必須飛過 carry 距離':'一般攻果嶺（看總距離）';
+  return `<p class="note">判斷模式：<b>${mode}</b></p><ol class="picks">${pickCard(res.best,res,true)}${res.alts.map(a=>pickCard(a,res,false)).join('')}</ol>`;
 }
 function viewPick(){
-  return `<header><div><h1>選桿</h1><div class="sub">輸入目標距離，推薦最接近的球桿與揮法</div></div></header>
+  return `<header><div><h1>選桿</h1><div class="sub">輸入目標距離，用攻果嶺邏輯推薦球桿</div></div></header>
   <section class="entry two">
-    <div class="field"><label for="pk-carry">目標 carry（${U()}）</label><input id="pk-carry" inputmode="decimal" autocomplete="off" placeholder="選填" value="${esc(S.pick.carry)}"></div>
+    <div class="field"><label for="pk-carry">必須飛過（carry，${U()}）</label><input id="pk-carry" inputmode="decimal" autocomplete="off" placeholder="選填" value="${esc(S.pick.carry)}"></div>
     <div class="field"><label for="pk-total">目標總距離（${U()}）</label><input id="pk-total" inputmode="decimal" autocomplete="off" placeholder="選填" value="${esc(S.pick.total)}"></div>
   </section>
-  <p class="note">要飛過障礙或停在果嶺前段時填 carry；只在乎落點總距離時填總距離就好。兩個都填會以 carry 為主、總距離為輔。</p>
-  <div id="pick-res">${viewPickResults()}</div>
-  <p class="note">推薦依你自己的紀錄計算，球數越多越準。標示「預估」的是還沒有紀錄的球桿，用一般距離估算，只當參考。</p>${statusLine()}`;
+  <div class="seg two"><button data-bias="long" aria-pressed="${S.pick.bias!=='short'}">寧長勿短</button><button data-bias="short" aria-pressed="${S.pick.bias==='short'}">寧短勿長</button></div>
+  <p class="note">果嶺前方有沙坑或水池選「寧長勿短」；果嶺後方是 OB、下坡或障礙時選「寧短勿長」。詳細判斷方式在「設定」最下方。</p>
+  <div id="pick-res">${viewPickResults()}</div>${statusLine()}`;
 }
 
 /* ---------- actions ---------- */
@@ -439,7 +481,16 @@ function viewSet(){
   <section class="card"><div class="label">匯出紀錄（CSV）</div>
     <button class="btn ghost" id="export">複製全部紀錄</button>
     <textarea id="csv" readonly hidden></textarea>
-    <p class="note">複製後可以貼到 Excel 或 Google 試算表。</p></section>${statusLine()}`;
+    <p class="note">複製後可以貼到 Excel 或 Google 試算表。</p></section>
+  <section class="card"><div class="label">選桿邏輯（攻果嶺）</div>
+    <ol class="logic">
+      <li><b>只填總距離：一般攻果嶺。</b>找平均總距離最接近目標的組合。選「寧長勿短」時，打短 1 碼算 1.5 碼誤差、打長 1 碼算 1 碼；「寧短勿長」則相反。</li>
+      <li><b>只填 carry：必須飛過。</b>用「穩定 carry 下限」判斷，也就是平均 carry 減掉你這個組合的落差。下限要大於等於目標才列為首選，否則標示「可能飛不過」。符合的組合中挑 carry 最接近目標的，避免拿太長的桿飛過果嶺。</li>
+      <li><b>兩個都填：飛過障礙＋停在目標附近。</b>先要求穩定 carry 下限飛過障礙，再挑總距離最接近目標的。若平常的滾動比「目標總距離 − carry」多 3 碼以上，會往後排並標示「可能滾過頭」，開桿面或高拋的挖起桿因此較容易被推薦。</li>
+      <li><b>揮法優先順序：</b>鐵桿和木桿以正常全揮最優先，3/4 揮、半揮依序往後，出力全揮放最後。挖起桿的各種幅度不扣分。開桿面平常稍微往後排，只有在滾動空間不夠時才容易排到前面。</li>
+      <li><b>穩定度與資料量：</b>落差越小越優先。少於 3 球的組合往後排；還沒有紀錄的球桿用一般距離估算，標示「預估」並排更後面。落差在 5 球以上時去掉最遠和最近各一球計算；球數不足時以 carry 的 5% 估算，最少 3 碼。</li>
+      <li><b>結果顯示：</b>一個首選，加上偏長、偏短和其他選擇各一，每個都附上判斷理由。</li>
+    </ol></section>${statusLine()}`;
 }
 function statusLine(){const[c,t]=syncText();return `<p class="status ${c}" id="syncline">${t}</p>`}
 function viewDetail(){
@@ -565,6 +616,7 @@ document.addEventListener('click',e=>{
   if(b.id==='sync-off'){if(S.armed==='sync-off'){sync.token='';sync.gistId='';sync.status='off';saveCfg();S.armed=null;toast('已中斷這台裝置的同步')}else S.armed='sync-off';render();return}
   if(d.del){if(S.armed===d.del)deleteShot(d.del);else{S.armed=d.del;render()}return}
   if(d.face){S.face=d.face;render();return}
+  if(d.bias){S.pick.bias=d.bias;try{localStorage.setItem('yardbook-gh-bias',d.bias)}catch(e){}render();return}
   if(d.cell){S.detail=d.cell.split('|');S.armed=null;render();return}
   if(d.unit){S.unit=d.unit;persistSettings();render();return}
   if(d.up!==undefined){const i=+d.up,a=S.clubs.slice();[a[i-1],a[i]]=[a[i],a[i-1]];S.clubs=a;persistSettings();render();return}
