@@ -108,6 +108,28 @@ td .none{color:var(--line);font-size:18px}
 .pk-nums b{font-family:var(--num);font-size:20px;color:var(--ink)}
 .pk-nums em{font-style:normal;font-size:12.5px;color:var(--green)}
 .pk-rng{font-size:12.5px}
+.allbtn{display:flex;justify-content:space-between;align-items:center;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;font-weight:500}
+.allcount{font-family:var(--num);font-size:17px;color:var(--green)}
+.sheet.full{max-height:92%}
+.sheet>*{flex-shrink:0}
+.filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin:0 -2px}
+.fchip{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 12px;font-family:var(--num);font-size:17px;font-weight:600}
+.fchip small{font-family:var(--body);font-size:11px;color:var(--muted);font-weight:400}
+.fchip[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--on-green)}
+.fchip[aria-pressed="true"] small{color:var(--on-green)}
+.grp{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.grp-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding-bottom:4px;border-bottom:2px solid var(--flag)}
+.grp-club{font-family:var(--num);font-size:24px;font-weight:700}
+.grp-n{font-size:12.5px;color:var(--muted)}
+.allshots li.editing{display:block;padding:10px 0}
+.edgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.edgrid label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);min-width:0}
+.edgrid select,.edgrid input{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;width:100%;min-width:0}
+.edgrid input{font-family:var(--num);font-size:20px;font-weight:600}
+.edopen{display:flex;align-items:center;gap:8px;margin:10px 0;font-size:14px}
+.edopen input{width:20px;height:20px;accent-color:var(--flag)}
+.edbtns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.edbtns .del{margin-left:auto;padding:8px 12px}
 .note{font-size:12.5px;color:var(--muted);line-height:1.6}
 .tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);
   padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);z-index:5}
@@ -171,7 +193,7 @@ const LS_KEY='yardbook-v1';
 const YD_PER_M=1.0936;
 
 const S={clubs:DEFAULT_CLUBS.slice(),unit:'yd',pcts:DEFAULT_PCTS.slice(),sessions:{},view:'log',face:'square',
-  sel:{club:'7i',swing:'full',open:false},pick:{carry:'',total:''},mode:'loading',armed:null,detail:null};
+  sel:{club:'7i',swing:'full',open:false},pick:{carry:'',total:''},all:{open:false,filter:'all',edit:null},mode:'loading',armed:null,detail:null};
 
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pad=n=>String(n).padStart(2,'0');
@@ -199,12 +221,14 @@ function loadLocal(){
   rebuild();
 }
 function merge(a,b){
-  const out={shots:Object.assign({},a.shots,b.shots),deleted:Object.assign({},a.deleted,b.deleted),settings:null};
+  const out={shots:Object.assign({},a.shots),deleted:Object.assign({},a.deleted,b.deleted),settings:null};
+  for(const id in b.shots){const x=b.shots[id],y=out.shots[id];if(!y||(x.u||x.t)>=(y.u||y.t))out.shots[id]=x}
   for(const id in out.deleted)delete out.shots[id];
   const sa=a.settings,sb=b.settings;out.settings=!sa?sb||null:!sb?sa:(sb.updated>sa.updated?sb:sa);
   return out;
 }
-const sig=x=>Object.keys(x.shots||{}).length+'|'+Object.keys(x.deleted||{}).length+'|'+(x.settings?x.settings.updated:0);
+const canon=v=>Array.isArray(v)?'['+v.map(canon).join(',')+']':v&&typeof v==='object'?'{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+canon(v[k])).join(',')+'}':JSON.stringify(v);
+const sig=x=>canon({shots:x.shots||{},deleted:x.deleted||{},settings:x.settings||null});
 async function gh(path,opt={}){
   const headers={'Authorization':'Bearer '+sync.token,'Accept':'application/vnd.github+json'};
   if(opt.body)headers['Content-Type']='application/json';
@@ -240,10 +264,10 @@ async function doSync(){
     }else{
       let remote;
       try{remote=await readGist()}catch(e){if(e.message==='missing'){sync.gistId='';saveCfg();throw new Error('retry')}throw e}
-      const before=sig(D), m=merge(remote,D);
+      const before=sig(D), m=merge(remote,D), after=sig(m);
       D=m;saveLocalData();
-      if(sig(m)!==before){if(D.settings)applySettings(D.settings);rebuild();render()}
-      if(sig(m)!==sig(remote))await gh('/gists/'+sync.gistId,{method:'PATCH',body:JSON.stringify({files:{[GIST_FILE]:{content:JSON.stringify(m)}}})});
+      if(after!==before){if(D.settings)applySettings(D.settings);rebuild();render()}
+      if(after!==sig(remote))await gh('/gists/'+sync.gistId,{method:'PATCH',body:JSON.stringify({files:{[GIST_FILE]:{content:JSON.stringify(m)}}})});
     }
     sync.last=Date.now();sync.status='ok';
   }catch(e){sync.status=e.message==='auth'?'auth':'error';if(e.message==='retry')scheduleSync(500)}
@@ -371,7 +395,8 @@ function viewLog(){
   <section class="card"><div class="combo"><h3>${esc(S.sel.club)}・${swName(S.sel.swing)}${S.sel.open?'・開桿面':''}</h3>
     ${st.n?`<span class="avg">平均 <b>${r0(st.carry)}</b> carry・總 <b>${r0(st.total)}</b>・${st.n} 球</span>`:''}</div>
     ${combo.length?`<ul class="shots">${combo.slice(0,8).map(s=>shotRow(s)).join('')}</ul>`:`<p class="empty">這個組合還沒有紀錄。打一球，輸入 carry 和滾動後按「記錄這一球」。</p>`}
-  </section>${statusLine()}`;
+  </section>
+  <button class="allbtn" id="open-all"><span>全部紀錄</span><span class="allcount">${allShots().length} 球 ›</span></button>${statusLine()}`;
 }
 function viewTable(){
   const extra=[...new Set(allShots().map(s=>s.club))].filter(c=>!S.clubs.includes(c));
@@ -427,6 +452,40 @@ function viewDetail(){
   </div></div>`;
 }
 
+function clubOrder(){const extra=[...new Set(allShots().map(s=>s.club))].filter(c=>!S.clubs.includes(c));return S.clubs.concat(extra)}
+function editRow(s){
+  const clubs=clubOrder(); const sw=swingsFor(s.club).slice(); if(!sw.some(x=>x.k===s.swing))sw.push({k:s.swing,n:swName(s.swing)});
+  return `<li class="editing"><form class="edform" id="edform" data-id="${s.id}">
+    <div class="edgrid">
+      <label>球桿<select id="ed-club">${clubs.map(c=>`<option value="${esc(c)}" ${c===s.club?'selected':''}>${esc(c)}</option>`).join('')}</select></label>
+      <label>揮法<select id="ed-swing">${sw.map(x=>`<option value="${x.k}" ${x.k===s.swing?'selected':''}>${x.n}</option>`).join('')}</select></label>
+      <label>Carry（${U()}）<input id="ed-carry" inputmode="decimal" value="${r0(s.carry)}"></label>
+      <label>滾動（${U()}）<input id="ed-roll" inputmode="decimal" value="${r0(s.roll)}"></label>
+    </div>
+    <label class="edopen"><input type="checkbox" id="ed-open" ${s.open?'checked':''}> 開桿面</label>
+    <div class="edbtns"><button class="btn" type="submit">儲存</button><button class="btn ghost" type="button" data-edcancel="1">取消</button>
+      <button class="del ${S.armed===s.id?'arm':''}" type="button" data-del="${s.id}">${S.armed===s.id?'確定刪除':'刪除'}</button></div>
+    <p class="note">${fmtDate(s.t)} 記錄</p></form></li>`;
+}
+function viewAll(){
+  if(!S.all.open)return'';
+  const shots=allShots(), byClub={};
+  for(const s of shots)(byClub[s.club]=byClub[s.club]||[]).push(s);
+  const clubs=clubOrder().filter(c=>byClub[c]);
+  const f=S.all.filter!=='all'&&byClub[S.all.filter]?S.all.filter:'all';
+  const shown=f==='all'?clubs:[f];
+  const groups=shown.map(c=>{const list=byClub[c],st=statsFor(list.filter(x=>!x.open&&(x.swing==='full'||x.swing==='pct100')));
+    return `<section class="grp"><div class="grp-h"><span class="grp-club">${esc(c)}</span><span class="grp-n">${list.length} 球${st.n?`・正常全揮平均 carry ${r0(st.carry)}`:''}</span></div>
+    <ul class="shots allshots">${list.map(s=>S.all.edit===s.id?editRow(s):`<li><span class="d">${fmtDate(s.t)}<br>${swName(s.swing)}${s.open?'・開桿面':''}</span>
+      <span class="n">${r0(s.carry)}<span> +${r0(s.roll)} = ${r0(s.carry+s.roll)}</span></span>
+      <button class="del" data-edit="${s.id}">編輯</button></li>`).join('')}</ul></section>`}).join('');
+  return `<div class="sheet-bg" data-close="1"><div class="sheet full" role="dialog" aria-label="全部紀錄">
+    <div class="sheet-head"><h2>全部紀錄・${shots.length} 球</h2><button class="x" data-close="1">關閉</button></div>
+    ${shots.length?`<div class="filters"><button class="fchip" data-allf="all" aria-pressed="${f==='all'}">全部</button>${clubs.map(c=>`<button class="fchip" data-allf="${esc(c)}" aria-pressed="${f===c}">${esc(c)} <small>${byClub[c].length}</small></button>`).join('')}</div>${groups}`
+    :`<p class="empty">還沒有任何紀錄。</p>`}
+  </div></div>`;
+}
+
 /* ---------- render & events ---------- */
 const app=document.getElementById('app');
 function render(){
@@ -434,7 +493,12 @@ function render(){
   const c=document.getElementById('in-carry'),r=document.getElementById('in-roll');
   const cv=c?c.value:'',rv=r?r.value:'';
   app.innerHTML=S.mode==='loading'?'<p class="sub">載入中…</p>':S.view==='log'?viewLog():S.view==='table'?viewTable():S.view==='pick'?viewPick():viewSet();
-  document.getElementById('sheet').innerHTML=viewDetail();
+  const sh=document.getElementById('sheet'), kept={};
+  sh.querySelectorAll('input[id],select[id]').forEach(el=>kept[el.id]=el.type==='checkbox'?el.checked:el.value);
+  const scroller=sh.querySelector('.sheet'), top=scroller?scroller.scrollTop:0;
+  sh.innerHTML=S.all.open?viewAll():viewDetail();
+  for(const id in kept){const el=document.getElementById(id);if(el&&sh.contains(el)){if(el.type==='checkbox')el.checked=kept[id];else el.value=kept[id]}}
+  const sc2=sh.querySelector('.sheet');if(sc2)sc2.scrollTop=top;
   document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.view===S.view));
   if(S.view==='log'){const c2=document.getElementById('in-carry'),r2=document.getElementById('in-roll');if(c2){c2.value=cv;r2.value=rv;updTotal()}}
   if(keep){const el=document.getElementById(keep);if(el&&el.tagName==='INPUT')el.focus()}
@@ -450,6 +514,12 @@ function doSave(){
   const c=num(ci.value),r=num(ri.value)||0;if(c==null||c<=0)return;
   addShot(c,r);ci.value='';ri.value='';render();document.getElementById('in-carry').focus();
 }
+document.addEventListener('change',e=>{
+  if(e.target.id!=='ed-club')return;
+  const sel=document.getElementById('ed-swing'),cur=sel.value,list=swingsFor(e.target.value);
+  sel.innerHTML=list.map(x=>`<option value="${x.k}">${x.n}</option>`).join('');
+  sel.value=list.some(x=>x.k===cur)?cur:(isWedge(e.target.value)?list[0].k:'full');
+});
 document.addEventListener('input',e=>{
   if(e.target.id==='in-carry'||e.target.id==='in-roll')updTotal();
   if(e.target.id==='pk-carry'||e.target.id==='pk-total'){S.pick[e.target.id==='pk-carry'?'carry':'total']=e.target.value;document.getElementById('pick-res').innerHTML=viewPickResults()}
@@ -460,6 +530,14 @@ document.addEventListener('keydown',e=>{
   else if(e.target.id==='in-roll'){e.preventDefault();doSave()}
 });
 document.addEventListener('submit',e=>{
+  if(e.target.id==='edform'){e.preventDefault();
+    const id=e.target.dataset.id,old=D.shots[id];if(!old)return;
+    const c=num(document.getElementById('ed-carry').value),r=num(document.getElementById('ed-roll').value)||0;
+    if(c==null||c<=0){toast('請輸入 carry 距離');return}
+    const keepOld=(v,o)=>Math.round(toDisp(o))===v?o:Math.round(fromIn(v)*10)/10;
+    D.shots[id]=Object.assign({},old,{club:document.getElementById('ed-club').value,swing:document.getElementById('ed-swing').value,
+      open:document.getElementById('ed-open').checked,carry:keepOld(c,old.carry),roll:keepOld(r,old.roll),u:Date.now()});
+    rebuild();changed();S.all.edit=null;render();toast('已更新這一球');return}
   if(e.target.id==='tokenform'){e.preventDefault();const v=document.getElementById('token-in').value.trim();
     if(!v){toast('請貼上金鑰');return}sync.token=v;sync.gistId='';saveCfg();render();doSync();return}
   if(e.target.id==='pctform'){e.preventDefault();
@@ -474,7 +552,11 @@ document.addEventListener('submit',e=>{
 document.addEventListener('click',e=>{
   const b=e.target.closest('button,[data-close]');if(!b)return;const d=b.dataset;
   if(d.view){S.view=d.view;S.armed=null;S.detail=null;render();window.scrollTo(0,0);return}
-  if(d.close&&(e.target===b||b.tagName==='BUTTON')){S.detail=null;S.armed=null;render();return}
+  if(d.close&&(e.target===b||b.tagName==='BUTTON')){S.detail=null;S.all.open=false;S.all.edit=null;S.armed=null;render();return}
+  if(b.id==='open-all'){S.all.open=true;S.all.edit=null;S.armed=null;render();return}
+  if(d.allf){S.all.filter=d.allf;S.all.edit=null;S.armed=null;render();const sc=document.querySelector('#sheet .sheet');if(sc)sc.scrollTop=0;return}
+  if(d.edit){S.all.edit=d.edit;S.armed=null;render();return}
+  if(d.edcancel){S.all.edit=null;S.armed=null;render();return}
   if(d.club!==undefined){S.sel.club=d.club;fixSel();S.armed=null;render();return}
   if(d.swing){S.sel.swing=d.swing;S.armed=null;render();return}
   if(b.id==='open-t'){S.sel.open=!S.sel.open;render();return}
