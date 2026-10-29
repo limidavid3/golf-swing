@@ -53,6 +53,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--flag);outline-o
 .chip[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--on-green)}
 .seg{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
 .seg.two{grid-template-columns:1fr 1fr}
+.seg.three{grid-template-columns:repeat(3,1fr)}
 .seg button{border:0;background:transparent;padding:11px 4px;font-size:14px;font-weight:500;border-left:1px solid var(--line)}
 .seg button:first-child{border-left:0}
 .seg button[aria-pressed="true"]{background:var(--green);color:var(--on-green)}
@@ -91,7 +92,7 @@ tr:last-child td,tr:last-child th{border-bottom:0}
 thead th{font-size:12px;color:var(--muted);font-weight:500;padding:8px 4px;background:var(--surface)}
 tbody th{font-family:var(--num);font-size:20px;font-weight:600;padding:0 10px;position:sticky;left:0;background:var(--surface);border-right:1px solid var(--line)}
 td button{width:100%;border:0;background:transparent;padding:8px 2px;display:flex;flex-direction:column;align-items:center;gap:0}
-td .c{font-family:var(--num);font-size:24px;font-weight:700;line-height:1.1}
+td .c{font-family:var(--num);font-size:26px;font-weight:700;line-height:1.1}
 td .t{font-size:11px;color:var(--muted)}
 section>.label+.tablebox{margin-bottom:16px}
 td .none{color:var(--line);font-size:18px}
@@ -136,6 +137,59 @@ td .none{color:var(--line);font-size:18px}
 .edopen input{width:20px;height:20px;accent-color:var(--flag)}
 .edbtns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .edbtns .del{margin-left:auto;padding:8px 12px}
+li.odd .n{opacity:.45;text-decoration:line-through}
+.oddtag{font-style:normal;font-size:11px;padding:0 6px;border-radius:4px;background:var(--line);color:var(--muted)}
+.edgrid.one{grid-template-columns:1fr;margin-top:8px}
+.pk-mode{font-size:12.5px;color:var(--muted);margin:0}
+.pk-mode b{color:var(--ink)}
+.picks li.pk{flex-direction:row;align-items:center;gap:12px;padding:10px 12px}
+.pk-rank{flex:0 0 28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--num);font-size:17px;font-weight:700;background:var(--line);color:var(--muted)}
+.pk.best .pk-rank{background:var(--flag);color:var(--on-flag)}
+.pk-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.pk-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.pk-chips{display:flex;gap:4px;flex-wrap:wrap}
+.ck{font-size:11.5px;padding:1px 7px;border-radius:99px;background:var(--green-soft);color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums}
+.ck.ok{color:var(--green);font-weight:600}
+.ck.bad{background:transparent;border:1px solid var(--danger);color:var(--danger);font-weight:600}
+.ck.mute{background:var(--line);color:var(--muted)}
+.pk-val{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15;flex:0 0 auto}
+.pk-val small{font-size:11px;color:var(--muted)}
+.pk-val b{font-family:var(--num);font-size:28px;font-weight:700}
+.pk-val small.near{color:var(--green);font-weight:700;font-size:13px}
+.fold{padding:0}
+.fold>summary{list-style:none;display:flex;align-items:center;gap:10px;padding:14px;cursor:pointer;font-weight:500}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary>span:first-child{flex:1}
+.sumv{font-size:13px;color:var(--muted);font-weight:400}
+.chev{width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:0 4px 4px 2px;transition:transform .15s}
+.fold[open]>summary .chev{transform:rotate(-135deg);margin:4px 4px 0 2px}
+.fold[open]>summary{border-bottom:1px solid var(--line)}
+.fold-body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:10px}
+.fold-body .note{margin:0}
+.pctlist{display:flex;flex-direction:column;gap:8px}
+.pctform{display:grid;grid-template-columns:56px 1fr auto;gap:8px;align-items:center}
+.pctform.def{padding-top:8px;border-top:1px dashed var(--line)}
+.pctform input{min-width:0;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-variant-numeric:tabular-nums}
+.pctname{font-family:var(--num);font-size:20px;font-weight:600;display:flex;flex-direction:column;line-height:1.1}
+.pctname small{font-family:var(--body);font-size:10.5px;font-weight:400;color:var(--muted)}
+.mini.wide{grid-column:2/4;width:auto;height:auto;padding:4px 10px;font-size:12.5px;justify-self:start;color:var(--muted)}
+.notestrip{display:flex;align-items:center;gap:8px;width:100%;margin-top:8px;padding:8px 12px;border-radius:10px;border:1px dashed var(--flag);background:var(--surface);text-align:left;min-width:0}
+.ns-k{flex:0 0 auto;font-size:12px;font-weight:700;color:var(--on-flag);background:var(--flag);padding:1px 8px;border-radius:6px}
+.ns-t{flex:1;min-width:0;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ns-n{flex:0 0 auto;font-size:12.5px;color:var(--muted)}
+.pk-note{border:0;background:transparent;padding:0;text-align:left;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.notes-full{position:fixed;inset:0;z-index:8;background:var(--bg);overflow-y:auto;display:flex;flex-direction:column;gap:12px;
+  padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.notes-full>*{flex-shrink:0;width:100%;max-width:560px;margin-inline:auto}
+.nhead h2{font-size:20px}
+.nlist{margin:6px 0 0;padding-left:1.4em;display:flex;flex-direction:column}
+.nlist li{border-top:1px solid var(--line)}
+.nlist li:first-child{border-top:0}
+.nlist li::marker{font-family:var(--num);font-weight:600;color:var(--green)}
+.nitem{border:0;background:transparent;width:100%;text-align:left;padding:10px 4px;font-size:15.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.nform{display:flex;flex-direction:column;gap:8px;padding:8px 0}
+.nform.add{flex-direction:row;align-items:flex-end;border-top:1px dashed var(--line);margin-top:6px;padding-top:12px}
+.nform textarea{flex:1;min-width:0;width:100%;font:inherit;font-size:16px;line-height:1.5;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);resize:vertical}
 .note{font-size:12.5px;color:var(--muted);line-height:1.6}
 .tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);
   padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);z-index:5}
@@ -183,15 +237,22 @@ textarea{width:100%;min-height:120px;font:12px/1.4 ui-monospace,Menlo,monospace;
 <script>
 const SWINGS=[{k:'power',n:'出力全揮'},{k:'full',n:'正常全揮'},{k:'three',n:'3/4 揮'},{k:'half',n:'半揮'}];
 const SW=Object.fromEntries(SWINGS.map(s=>[s.k,s.n]));
-const isWedge=c=>/°$/.test(String(c).trim());
+const isWedge=c=>{c=String(c).trim();return /°$/.test(c)||/^(PW|P|AW|GW|SW|LW)$/i.test(c)};
+const FACES={square:'標準',open:'開桿面',closed:'關桿面'};
+const faceOf=s=>s.face||(s.open===true?'open':'square');
+const facesFor=c=>isWedge(c)?['open','square','closed']:['square'];
+const faceTag=f=>!f||f==='square'?'':'・'+FACES[f];
+function legacyKeys(clubs){const set=new Set(allShots().filter(s=>clubs.includes(s.club)&&!s.swing.startsWith('pct')).map(s=>s.swing));return SWINGS.map(x=>x.k).filter(k=>set.has(k))}
 const swName=k=>k.startsWith('pct')?k.slice(3)+'%':(SW[k]||k);
-function wedgeKeys(extraFromData){
-  const keys=S.pcts.map(p=>'pct'+p);
-  if(extraFromData){for(const s of allShots())if(s.swing.startsWith('pct')&&!keys.includes(s.swing))keys.push(s.swing);
-    keys.sort((a,b)=>+b.slice(3)-+a.slice(3));}
-  return keys;
+const pctsFor=c=>(S.pctMap&&S.pctMap[c])||S.pcts;
+// % swing keys for one club (its own list) or, with no club, the union across all wedge-type clubs (distance table columns).
+function wedgeKeys(extraFromData,club){
+  const base=club?pctsFor(club):[...new Set([S.pcts].concat(clubOrder().filter(isWedge).map(pctsFor)).flat())];
+  const keys=base.map(p=>'pct'+p);
+  if(extraFromData){for(const s of allShots())if(s.swing.startsWith('pct')&&(!club||s.club===club)&&!keys.includes(s.swing))keys.push(s.swing)}
+  return keys.sort((a,b)=>+b.slice(3)-+a.slice(3));
 }
-function swingsFor(club){return isWedge(club)?wedgeKeys(false).map(k=>({k,n:swName(k)})):SWINGS}
+function swingsFor(club){return isWedge(club)?wedgeKeys(false,club).map(k=>({k,n:swName(k)})):SWINGS}
 const NEW_WOODS=['1W','3W','3H','4H'];
 const DEFAULT_PCTS=[100,90,80,70,60,50,40,30,20,10];
 const DEFAULT_CLUBS=['1W','3W','3H','4H','5i','6i','7i','8i','9i','PW','48°','54°','58°'];
@@ -199,7 +260,7 @@ const LS_KEY='yardbook-v1';
 const YD_PER_M=1.0936;
 
 const S={clubs:DEFAULT_CLUBS.slice(),unit:'yd',pcts:DEFAULT_PCTS.slice(),sessions:{},view:'log',face:'square',
-  sel:{club:'7i',swing:'full',open:false},pick:{carry:'',total:'',bias:(()=>{try{return localStorage.getItem('yardbook-gh-bias')||'long'}catch(e){return'long'}})()},all:{open:false,filter:'all',edit:null},mode:'loading',armed:null,detail:null};
+  statMode:'mad',pctMap:{},openSec:{},sel:{club:'7i',swing:'full',face:'square'},pick:{carry:'',total:'',bias:(()=>{try{return localStorage.getItem('yardbook-gh-bias')||'long'}catch(e){return'long'}})()},notes:{open:false,club:'all',edit:null},all:{open:false,filter:'all',edit:null},mode:'loading',armed:null,detail:null};
 
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pad=n=>String(n).padStart(2,'0');
@@ -212,17 +273,17 @@ const U=()=>S.unit==='m'?'公尺':'碼';
 
 /* ---------- storage: this device first, synced through a private GitHub Gist ---------- */
 const LS_DATA='yardbook-gh-data', LS_CFG='yardbook-gh-sync', GIST_FILE='yardbook-data.json', GH='https://api.github.com';
-let D={shots:{},deleted:{},settings:null};
+let D={shots:{},deleted:{},settings:null,notes:{}};
 const sync={token:'',gistId:'',last:0,rev:0,busy:false,status:'off',timer:null};
 function loadCfg(){try{const v=JSON.parse(localStorage.getItem(LS_CFG)||'{}');sync.token=v.token||'';sync.gistId=v.gistId||'';sync.last=v.last||0}catch(e){}}
 function saveCfg(){try{localStorage.setItem(LS_CFG,JSON.stringify({token:sync.token,gistId:sync.gistId,last:sync.last}))}catch(e){}}
 function saveLocalData(){try{localStorage.setItem(LS_DATA,JSON.stringify(D))}catch(e){toast('手機儲存空間不足，請先匯出備份')}}
-function applySettings(st){if(!st)return;S.clubs=(st.clubs||DEFAULT_CLUBS).slice();S.unit=st.unit||'yd';S.pcts=(st.pcts||DEFAULT_PCTS).slice();fixSel()}
+function applySettings(st){if(!st)return;S.clubs=(st.clubs||DEFAULT_CLUBS).slice();S.unit=st.unit||'yd';S.pcts=(st.pcts||DEFAULT_PCTS).slice();S.pctMap=Object.assign({},st.pctMap||{});S.statMode=st.statMode||'mad';fixSel()}
 function rebuild(){const ss={};for(const id in D.shots){if(D.deleted[id])continue;const s=D.shots[id];const k=dayId(new Date(s.t));(ss[k]=ss[k]||{shots:[]}).shots.push(s)}S.sessions=ss}
 function changed(){saveLocalData();sync.rev++;scheduleSync(2000)}
-function persistSettings(){D.settings={clubs:S.clubs.slice(),unit:S.unit,pcts:S.pcts.slice(),updated:Date.now()};changed()}
+function persistSettings(){D.settings={clubs:S.clubs.slice(),unit:S.unit,pcts:S.pcts.slice(),pctMap:Object.assign({},S.pctMap),statMode:S.statMode,updated:Date.now()};changed()}
 function loadLocal(){
-  try{const v=JSON.parse(localStorage.getItem(LS_DATA)||'null');if(v)D={shots:v.shots||{},deleted:v.deleted||{},settings:v.settings||null}}catch(e){}
+  try{const v=JSON.parse(localStorage.getItem(LS_DATA)||'null');if(v)D={shots:v.shots||{},deleted:v.deleted||{},settings:v.settings||null,notes:v.notes||{}}}catch(e){}
   if(D.settings)applySettings(D.settings);
   rebuild();
 }
@@ -231,10 +292,11 @@ function merge(a,b){
   for(const id in b.shots){const x=b.shots[id],y=out.shots[id];if(!y||(x.u||x.t)>=(y.u||y.t))out.shots[id]=x}
   for(const id in out.deleted)delete out.shots[id];
   const sa=a.settings,sb=b.settings;out.settings=!sa?sb||null:!sb?sa:(sb.updated>sa.updated?sb:sa);
+  out.notes=Object.assign({},a.notes||{});for(const c in (b.notes||{})){const x=b.notes[c],y=out.notes[c];if(!y||x.updated>=y.updated)out.notes[c]=x}
   return out;
 }
 const canon=v=>Array.isArray(v)?'['+v.map(canon).join(',')+']':v&&typeof v==='object'?'{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+canon(v[k])).join(',')+'}':JSON.stringify(v);
-const sig=x=>canon({shots:x.shots||{},deleted:x.deleted||{},settings:x.settings||null});
+const sig=x=>canon({shots:x.shots||{},deleted:x.deleted||{},settings:x.settings||null,notes:x.notes||{}});
 async function gh(path,opt={}){
   const headers={'Authorization':'Bearer '+sync.token,'Accept':'application/vnd.github+json'};
   if(opt.body)headers['Content-Type']='application/json';
@@ -251,9 +313,9 @@ async function findGist(){
 }
 async function readGist(){
   const g=await gh('/gists/'+sync.gistId);const f=g.files&&g.files[GIST_FILE];
-  if(!f)return{shots:{},deleted:{},settings:null};
+  if(!f)return{shots:{},deleted:{},settings:null,notes:{}};
   let txt=f.content;if(f.truncated){const r=await fetch(f.raw_url,{cache:'no-store'});txt=await r.text()}
-  try{const v=JSON.parse(txt);return{shots:v.shots||{},deleted:v.deleted||{},settings:v.settings||null}}catch(e){return{shots:{},deleted:{},settings:null}}
+  try{const v=JSON.parse(txt);return{shots:v.shots||{},deleted:v.deleted||{},settings:v.settings||null,notes:v.notes||{}}}catch(e){return{shots:{},deleted:{},settings:null,notes:{}}}
 }
 function scheduleSync(ms){if(!sync.token)return;clearTimeout(sync.timer);sync.timer=setTimeout(doSync,ms)}
 async function doSync(){
@@ -301,35 +363,51 @@ function init(){
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')scheduleSync(300)});
 }
 function migrate(){S.clubs=NEW_WOODS.filter(c=>!S.clubs.includes(c)).concat(S.clubs);S.pcts=DEFAULT_PCTS.slice()}
-function fixSel(){if(!S.clubs.includes(S.sel.club))S.sel.club=S.clubs[0]||'';const ks=swingsFor(S.sel.club).map(x=>x.k);if(!ks.includes(S.sel.swing))S.sel.swing=isWedge(S.sel.club)?ks[0]:'full'}
+function fixSel(){if(!S.clubs.includes(S.sel.club))S.sel.club=S.clubs[0]||'';const ks=swingsFor(S.sel.club).map(x=>x.k);if(!ks.includes(S.sel.swing))S.sel.swing=isWedge(S.sel.club)?ks[0]:'full';if(!facesFor(S.sel.club).includes(S.sel.face))S.sel.face='square'}
 
 /* ---------- data helpers ---------- */
 function allShots(){const out=[];for(const id in S.sessions)for(const s of S.sessions[id].shots)out.push(s);return out.sort((a,b)=>b.t-a.t)}
-function trimmedAvg(arr){if(!arr.length)return null;const a=arr.slice().sort((x,y)=>x-y);const b=a.length>=5?a.slice(1,-1):a;return b.reduce((x,y)=>x+y,0)/b.length}
-function statsFor(shots){return{n:shots.length,carry:trimmedAvg(shots.map(s=>s.carry)),total:trimmedAvg(shots.map(s=>s.carry+s.roll)),
-  min:shots.length?Math.min(...shots.map(s=>s.carry)):null,max:shots.length?Math.max(...shots.map(s=>s.carry)):null}}
-function match(club,swing,open){return allShots().filter(s=>s.club===club&&s.swing===swing&&!!s.open===!!open)}
+const median=a=>{if(!a.length)return null;const b=a.slice().sort((x,y)=>x-y),m=b.length>>1;return b.length%2?b[m]:(b[m-1]+b[m])/2};
+const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+// MAD outlier screen on carry (see 設定 → 距離統計方式). Short misses are flagged sooner than long ones.
+function splitOutliers(shots){
+  if(S.statMode==='mean'||shots.length<6)return{used:shots,out:[]};
+  const cs=shots.map(s=>s.carry),med=median(cs);
+  const sig=Math.max(2,1.4826*median(cs.map(c=>Math.abs(c-med))));
+  const used=[],out=[];
+  for(const s of shots){const d=s.carry-med;(d<-2.5*sig||d>3*sig?out:used).push(s)}
+  return{used,out};
+}
+function statsFor(shots){
+  const n=shots.length;if(!n)return{n:0,used:0,out:0,carry:null,total:null,min:null,max:null,sd:null};
+  const{used,out}=splitOutliers(shots),cs=used.map(s=>s.carry),ts=used.map(s=>s.carry+s.roll);
+  const useMed=S.statMode!=='mean'&&n>=3&&n<=5;
+  return{n,used:used.length,out:out.length,carry:useMed?median(cs):mean(cs),total:useMed?median(ts):mean(ts),
+    min:Math.min(...cs),max:Math.max(...cs),sd:used.length>=3?sdOf(cs):null};
+}
+let OUT=new Set();
+function computeOutliers(){const g={};for(const s of allShots()){const k=s.club+'|'+s.swing+'|'+faceOf(s);(g[k]=g[k]||[]).push(s)}
+  const set=new Set();for(const k in g)for(const s of splitOutliers(g[k]).out)set.add(s.id);return set}
+function match(club,swing,face){return allShots().filter(s=>s.club===club&&s.swing===swing&&faceOf(s)===face)}
 
 /* ---------- club picker ---------- */
 // Starting estimates (total yards, normal full swing) used only until a combo has its own shots.
 const EST={'1W':230,'3W':210,'3H':190,'4H':180,'5i':165,'6i':155,'7i':145,'8i':135,'9i':125,'PW':115,'48°':107,'54°':92,'58°':78};
 const ROLL_SHARE=c=>/W$/.test(c)?0.12:/H$/.test(c)?0.08:isWedge(c)?0.03:0.06;
 function sdOf(a){if(a.length<2)return null;const m=a.reduce((x,y)=>x+y,0)/a.length;return Math.sqrt(a.reduce((x,y)=>x+(y-m)**2,0)/(a.length-1))}
-function trimmed(a){const b=a.slice().sort((x,y)=>x-y);return b.length>=5?b.slice(1,-1):b}
-// Every club + swing (+ open face) you have shots for, plus starting estimates for full swings with no shots yet.
+// Every club + swing + face you have shots for, plus starting estimates for full swings with no shots yet.
 function candidates(){
   const out=[];
   for(const club of clubOrder()){
-    const keys=isWedge(club)?wedgeKeys(true):SWINGS.map(x=>x.k);
-    for(const k of keys)for(const open of [false,true]){
-      const sh=match(club,k,open), st=statsFor(sh);
+    const keys=isWedge(club)?wedgeKeys(true,club).concat(legacyKeys([club])):SWINGS.map(x=>x.k);
+    for(const k of keys)for(const face of facesFor(club)){
+      const st=statsFor(match(club,k,face));
       if(st.n){
-        let sd=sh.length>=3?sdOf(trimmed(sh.map(x=>x.carry))):null;
-        sd=Math.max(3,sd==null?Math.max(4,0.05*st.carry):sd);
-        out.push({club,swing:k,open,carry:st.carry,total:st.total,roll:st.total-st.carry,n:st.n,sd,low:st.carry-sd,est:false});
-      }else if(!open&&(k==='full'||k==='pct100')&&EST[club]&&S.clubs.includes(club)){
+        const sd=Math.max(3,st.sd==null?Math.max(4,0.05*st.carry):st.sd);
+        out.push({club,swing:k,face,carry:st.carry,total:st.total,roll:st.total-st.carry,n:st.n,sd,low:st.carry-sd,est:false});
+      }else if(face==='square'&&(k==='full'||k==='pct100')&&EST[club]&&S.clubs.includes(club)){
         const t=EST[club],c=t*(1-ROLL_SHARE(club)),sd=Math.max(4,0.06*c);
-        out.push({club,swing:k,open,carry:c,total:t,roll:t-c,n:0,sd,low:c-sd,est:true});
+        out.push({club,swing:k,face,carry:c,total:t,roll:t-c,n:0,sd,low:c-sd,est:true});
       }
     }
   }
@@ -342,48 +420,34 @@ function recommend(C,T){
   const w=d=>d<0?(longFirst?1.5:1)*-d:(longFirst?1:1.5)*d;   // short/long miss weighting
   const room=C!=null&&T!=null?T-C:null;                       // roll space between carry point and target
   const list=candidates().map(c=>{
-    const warn=[];let pass=true;
-    if(C!=null&&c.low<C){pass=false;warn.push('可能飛不過')}
-    const err=T!=null?w(c.total-T):w(c.carry-C);
-    let pen=(isWedge(c.club)?0:(SWING_PEN[c.swing]||0))+c.sd*0.3+(c.est?5:c.n<3?2:0)+(c.open?3:0);
-    if(room!=null){const over=c.roll-room;if(over>3){pen+=over*0.5;warn.push('可能滾過頭')}}
-    return Object.assign({},c,{pass,err,score:err+pen,warn,metric:T!=null?c.total:c.carry});
+    const metric=T!=null?c.total:c.carry, pass=C==null||c.low>=C;
+    let pen=(isWedge(c.club)?0:(SWING_PEN[c.swing]||0))+c.sd*0.3+(c.est?5:c.n<3?2:0)+(c.face!=='square'?3:0);
+    const rollOver=room!=null&&c.roll-room>3;if(rollOver)pen+=(c.roll-room)*0.5;
+    return Object.assign({},c,{pass,rollOver,metric,score:w(metric-(T!=null?T:C))+pen});
   });
   list.sort((a,b)=>(b.pass-a.pass)||(a.score-b.score));
-  if(!list.length)return null;
-  const best=list[0],rest=list.slice(1),picked=[best];
-  const longer=rest.find(x=>x.metric>best.metric+1), shorter=rest.find(x=>x.metric<best.metric-1);
-  const alts=[];
-  if(longer){alts.push(Object.assign({},longer,{label:'偏長的選擇'}));picked.push(longer)}
-  if(shorter){alts.push(Object.assign({},shorter,{label:'偏短的選擇'}));picked.push(shorter)}
-  for(const x of rest){if(alts.length>=3)break;if(!picked.includes(x)){alts.push(Object.assign({},x,{label:'其他選擇'}));picked.push(x)}}
-  return{best,alts,C,T,room};
+  return list.length?{list:list.slice(0,5),C,T,room}:null;
 }
-function pickReason(c,C,T,room){
-  const d=v=>{const n=Math.round(toDisp(v));return n===0?'剛好':n>0?`+${n}`:`${n}`};
-  const parts=[];
-  if(C!=null)parts.push(c.pass?`穩定 carry 下限 ${r0(c.low)}，可飛過 ${r0(C)}（餘裕 ${d(c.low-C)}）`:(Math.round(toDisp(C-c.low))<1?`穩定 carry 下限稍低於 ${r0(C)}，打差一點可能飛不過`:`穩定 carry 下限只有 ${r0(c.low)}，比 ${r0(C)} 少 ${Math.round(toDisp(C-c.low))}`));
-  if(T!=null)parts.push(`平均總距離 ${r0(c.total)}，離目標 ${d(c.total-T)}`);
-  else parts.push(`平均 carry ${r0(c.carry)}，離目標 ${d(c.carry-C)}`);
-  if(room!=null)parts.push(`平常滾 ${r0(c.roll)}，可滾空間 ${r0(room)}`);
-  parts.push(c.est?'尚無紀錄，用一般距離估算':`落差約 ±${Math.round(toDisp(c.sd))}・${c.n} 球`);
-  return parts.join('；');
-}
-function pickCard(c,res,head){
-  return `<li class="${head?'best':''}">
-    <div class="pk-main">${head?'<span class="pk-lbl">首選</span>':`<span class="pk-lbl alt">${c.label}</span>`}
-      <span class="pk-club">${esc(c.club)}</span><span class="pk-sw">${swName(c.swing)}${c.open?'・開桿面':''}</span>
-      ${c.est?'<span class="tag">預估</span>':`<span class="tag ok">${c.n} 球</span>`}</div>
-    ${c.warn.length?`<div class="pk-warn">⚠ ${c.warn.join('、')}</div>`:''}
-    <div class="pk-why">${pickReason(c,res.C,res.T,res.room)}</div></li>`;
+function pickCard(c,i,res){
+  const dv=Math.round(toDisp(c.metric-(res.T!=null?res.T:res.C)));
+  const chips=[];
+  if(res.C!=null)chips.push(c.pass?`<span class="ck ok">飛過 ✓ 餘 ${Math.round(toDisp(c.low-res.C))}</span>`:`<span class="ck bad">⚠ 可能飛不過</span>`);
+  if(res.room!=null)chips.push(c.rollOver?`<span class="ck bad">⚠ 滾過頭 ${r0(c.roll)}</span>`:`<span class="ck">滾 ${r0(c.roll)}</span>`);
+  chips.push(`<span class="ck">±${Math.round(toDisp(c.sd))}</span>`);
+  chips.push(c.est?`<span class="ck mute">預估</span>`:`<span class="ck">${c.n}球</span>`);
+  return `<li class="pk ${i===0?'best':''}"><span class="pk-rank">${i+1}</span>
+    <div class="pk-body"><div class="pk-top"><span class="pk-club">${esc(c.club)}</span><span class="pk-sw">${swName(c.swing)}${faceTag(c.face)}</span></div>
+      <div class="pk-chips">${chips.join('')}</div>${notesFor(c.club).length?`<button class="pk-note" data-notes="${esc(c.club)}">注意：${esc(notesFor(c.club)[0].text)}${notesFor(c.club).length>1?`（共 ${notesFor(c.club).length} 項）`:''}</button>`:''}</div>
+    <div class="pk-val"><small>${res.T!=null?'總距離':'carry'}</small><b>${r0(c.metric)}</b><small class="${Math.abs(dv)<=3?'near':''}">${dv===0?'剛好':dv>0?'+'+dv:dv}</small></div></li>`;
 }
 function viewPickResults(){
   const tc=num(S.pick.carry),tt=num(S.pick.total);
-  if(tc==null&&tt==null)return `<p class="empty">輸入目標距離後，這裡會推薦攻果嶺的球桿和揮法。</p>`;
+  if(tc==null&&tt==null)return `<p class="empty">輸入目標距離後，這裡會依攻果嶺邏輯排出前 5 個選擇。</p>`;
   const res=recommend(tc!=null?fromIn(tc):null,tt!=null?fromIn(tt):null);
   if(!res)return `<p class="empty">還沒有可以比對的紀錄。</p>`;
-  const mode=tc!=null&&tt!=null?'飛過障礙＋停在目標附近':tc!=null?'必須飛過 carry 距離':'一般攻果嶺（看總距離）';
-  return `<p class="note">判斷模式：<b>${mode}</b></p><ol class="picks">${pickCard(res.best,res,true)}${res.alts.map(a=>pickCard(a,res,false)).join('')}</ol>`;
+  const mode=tc!=null&&tt!=null?'飛過＋停在目標':tc!=null?'必須飛過':'一般攻果嶺';
+  return `<p class="pk-mode"><b>${mode}</b>・${S.pick.bias==='short'?'寧短勿長':'寧長勿短'}・排序：${tc!=null?'能否飛過 → ':''}距離誤差 → 揮法與穩定度</p>
+  <ol class="picks">${res.list.map((c,i)=>pickCard(c,i,res)).join('')}</ol>`;
 }
 function viewPick(){
   return `<header><div><h1>選桿</h1><div class="sub">輸入目標距離，用攻果嶺邏輯推薦球桿</div></div></header>
@@ -399,10 +463,10 @@ function viewPick(){
 /* ---------- actions ---------- */
 function addShot(carry,roll){
   const now=new Date(),id=dayId(now);
-  const shot={id:now.getTime().toString(36)+Math.random().toString(36).slice(2,6),t:now.getTime(),club:S.sel.club,swing:S.sel.swing,open:S.sel.open,
+  const shot={id:now.getTime().toString(36)+Math.random().toString(36).slice(2,6),t:now.getTime(),club:S.sel.club,swing:S.sel.swing,face:S.sel.face,open:S.sel.face==='open',
     carry:Math.round(fromIn(carry)*10)/10,roll:Math.round(fromIn(roll)*10)/10};
   D.shots[shot.id]=shot;rebuild();changed();
-  toast(`已記錄 ${S.sel.club} ${swName(S.sel.swing)}${S.sel.open?'・開桿面':''}　${carry}+${roll}`);
+  toast(`已記錄 ${S.sel.club} ${swName(S.sel.swing)}${faceTag(S.sel.face)}　${carry}+${roll}`);
 }
 function deleteShot(shotId){
   D.deleted[shotId]=Date.now();delete D.shots[shotId];rebuild();changed();
@@ -414,95 +478,149 @@ let tt;function toast(msg){const el=document.getElementById('toast');el.textCont
 /* ---------- views ---------- */
 function shotRow(s,withMeta){
   const tot=r0(s.carry+s.roll);
-  const meta=withMeta?`${esc(s.club)}・${swName(s.swing)}${s.open?'・開':''}`:'';
-  return `<li><span class="d">${fmtDate(s.t)}${meta?'<br>'+meta:''}</span>
+  const meta=withMeta?`${esc(s.club)}・${swName(s.swing)}${faceTag(faceOf(s))}`:'';
+  const odd=OUT.has(s.id);
+  return `<li class="${odd?'odd':''}"><span class="d">${fmtDate(s.t)}${odd?' <em class="oddtag">異常</em>':''}${meta?'<br>'+meta:''}</span>
     <span class="n">${r0(s.carry)}<span> +${r0(s.roll)} = ${tot}</span></span>
     <button class="del ${S.armed===s.id?'arm':''}" data-del="${s.id}">${S.armed===s.id?'確定刪除':'刪除'}</button></li>`;
 }
 function viewLog(){
   const today=(S.sessions[dayId(new Date())]||{shots:[]}).shots.length;
-  const combo=match(S.sel.club,S.sel.swing,S.sel.open), st=statsFor(combo);
+  const combo=match(S.sel.club,S.sel.swing,S.sel.face), st=statsFor(combo);
   return `<header><div><h1>練球碼數本</h1><div class="sub">每一球記下 carry 和滾動</div></div><span class="badge">今天 ${today} 球</span></header>
-  <section><div class="label">球桿</div><div class="clubs">${S.clubs.map(c=>`<button class="chip" data-club="${esc(c)}" aria-pressed="${c===S.sel.club}">${esc(c)}</button>`).join('')}</div></section>
+  <section><div class="label">球桿</div><div class="clubs">${S.clubs.map(c=>`<button class="chip" data-club="${esc(c)}" aria-pressed="${c===S.sel.club}">${esc(c)}</button>`).join('')}</div>${noteStrip(S.sel.club)}</section>
   <section><div class="label">${isWedge(S.sel.club)?'揮桿幅度':'揮桿'}</div>${isWedge(S.sel.club)
     ?`<div class="pctgrid">${swingsFor(S.sel.club).map(s=>`<button class="chip pct" data-swing="${s.k}" aria-pressed="${s.k===S.sel.swing}">${s.n}</button>`).join('')}</div>`
     :`<div class="seg">${SWINGS.map(s=>`<button data-swing="${s.k}" aria-pressed="${s.k===S.sel.swing}">${s.n}</button>`).join('')}</div>`}</section>
-  <button class="toggle" id="open-t" aria-pressed="${S.sel.open}"><span>開桿面</span><span class="sw"></span></button>
+  ${isWedge(S.sel.club)
+    ?`<section><div class="label">桿面</div><div class="seg three">${facesFor(S.sel.club).map(f=>`<button data-sface="${f}" aria-pressed="${S.sel.face===f}">${FACES[f]}</button>`).join('')}</div></section>`
+    :''}
   <section class="entry">
     <div class="field"><label for="in-carry">Carry（${U()}）</label><input id="in-carry" inputmode="decimal" enterkeyhint="next" autocomplete="off" placeholder="0"></div>
     <div class="field"><label for="in-roll">滾動（${U()}）</label><input id="in-roll" inputmode="decimal" enterkeyhint="done" autocomplete="off" placeholder="0"></div>
     <div class="total"><small>總距離</small><b id="tot">—</b></div>
   </section>
   <button class="save" id="save" disabled>記錄這一球</button>
-  <section class="card"><div class="combo"><h3>${esc(S.sel.club)}・${swName(S.sel.swing)}${S.sel.open?'・開桿面':''}</h3>
-    ${st.n?`<span class="avg">平均 <b>${r0(st.carry)}</b> carry・總 <b>${r0(st.total)}</b>・${st.n} 球</span>`:''}</div>
+  <section class="card"><div class="combo"><h3>${esc(S.sel.club)}・${swName(S.sel.swing)}${faceTag(S.sel.face)}</h3>
+    ${st.n?`<span class="avg">總 <b>${r0(st.total)}</b>・carry ${r0(st.carry)}・${st.n} 球${st.out?`（排除 ${st.out}）`:''}</span>`:''}</div>
     ${combo.length?`<ul class="shots">${combo.slice(0,8).map(s=>shotRow(s)).join('')}</ul>`:`<p class="empty">這個組合還沒有紀錄。打一球，輸入 carry 和滾動後按「記錄這一球」。</p>`}
   </section>
   <button class="allbtn" id="open-all"><span>全部紀錄</span><span class="allcount">${allShots().length} 球 ›</span></button>${statusLine()}`;
 }
 function viewTable(){
-  const extra=[...new Set(allShots().map(s=>s.club))].filter(c=>!S.clubs.includes(c));
-  const clubs=S.clubs.concat(extra), open=S.face==='open';
+  const clubs=clubOrder(), face=S.face;
   const tbl=(list,cols,cap)=>list.length?`<div class="label">${cap}</div><div class="tablebox"><table style="min-width:${Math.max(420,70+cols.length*64)}px"><thead><tr><th></th>${cols.map(s=>`<th scope="col">${s.n}</th>`).join('')}</tr></thead><tbody>${list.map(c=>`<tr><th scope="row">${esc(c)}</th>${cols.map(s=>{
-    const st=statsFor(match(c,s.k,open));
-    return `<td><button data-cell="${esc(c)}|${s.k}">${st.n?`<span class="c">${r0(st.carry)}</span><span class="t">總 ${r0(st.total)}・${st.n}球</span>`:'<span class="none">—</span>'}</button></td>`}).join('')}</tr>`).join('')}</tbody></table></div>`:'';
+    const st=statsFor(match(c,s.k,face));
+    return `<td><button data-cell="${esc(c)}|${s.k}">${st.n?`<span class="c">${r0(st.total)}</span><span class="t">carry ${r0(st.carry)}</span><span class="t">${st.n}球${st.out?`・排除${st.out}`:''}</span>`:'<span class="none">—</span>'}</button></td>`}).join('')}</tr>`).join('')}</tbody></table></div>`:'';
   const irons=clubs.filter(c=>!isWedge(c)), wedges=clubs.filter(isWedge);
-  const rows=tbl(irons,SWINGS,'鐵桿與木桿')+tbl(wedges,wedgeKeys(true).map(k=>({k,n:swName(k)})),'挖起桿（揮桿幅度）');
+  const wcols=wedgeKeys(true).map(k=>({k,n:swName(k)})).concat(legacyKeys(wedges).map(k=>({k,n:SW[k]})));
+  const rows=(face==='square'?tbl(irons,SWINGS,'鐵桿與木桿'):'')+tbl(wedges,wcols,'挖起桿與 PW（揮桿幅度）');
   const any=allShots().length;
-  return `<header><div><h1>距離表</h1><div class="sub">大字是平均 carry，單位：${U()}</div></div></header>
-  <div class="seg two"><button data-face="square" aria-pressed="${!open}">標準桿面</button><button data-face="open" aria-pressed="${open}">開桿面</button></div>
+  return `<header><div><h1>距離表</h1><div class="sub">大字是平均總距離，小字是 carry，單位：${U()}</div></div></header>
+  <div class="seg three">${['square','open','closed'].map(f=>`<button data-face="${f}" aria-pressed="${face===f}">${f==='square'?'標準桿面':FACES[f]}</button>`).join('')}</div>
   <section>${rows}</section>
-  <p class="note">${any?'點任一格看每一球的明細，也可以在那裡刪除打錯的紀錄。':'還沒有任何紀錄。到「記錄」頁打幾球，這裡就會自動算出每支桿、每種揮法的平均距離。'}
-  同一組超過 5 球時，平均會去掉最遠和最近各一球，比較接近你實際能穩定打出的距離。</p>${statusLine()}`;
+  <p class="note">${any?'點任一格看每一球的明細。':'還沒有任何紀錄。到「記錄」頁打幾球，這裡就會自動算出每支桿、每種揮法的平均距離。'}
+  目前統計方式：${S.statMode==='mean'?'全部平均':'排除異常球'}，可在「設定」切換。開桿面和關桿面只適用挖起桿與 PW。</p>${statusLine()}`;
 }
 function viewSet(){
-  return `<header><div><h1>設定</h1><div class="sub">球桿清單、單位與匯出</div></div></header>
-  <section class="card"><div class="label">我的球桿（依序顯示）</div>
+  return `<header><div><h1>設定</h1><div class="sub">點選項目展開設定</div></div></header>
+  <details class="card fold" data-sec="sec1" ${S.openSec.sec1?'open':''}><summary><span>我的球桿（依序顯示）</span><span class="sumv">${S.clubs.length} 支</span><span class="chev" aria-hidden="true"></span></summary><div class="fold-body">
     <ul class="clublist">${S.clubs.map((c,i)=>`<li><span class="nm">${esc(c)}</span>
       <button class="mini" data-up="${i}" aria-label="上移 ${esc(c)}" ${i?'':'disabled'}>↑</button>
       <button class="mini" data-down="${i}" aria-label="下移 ${esc(c)}" ${i<S.clubs.length-1?'':'disabled'}>↓</button>
       <button class="mini" data-rm="${i}" aria-label="移除 ${esc(c)}">✕</button></li>`).join('')}</ul>
     <form class="addrow" id="addform"><input id="add-club" maxlength="8" placeholder="例如 1W、3W、4H、60°"><button class="btn" type="submit">加入</button></form>
-    <p class="note">移除球桿不會刪掉它的舊紀錄，距離表仍會顯示在最下方。</p></section>
-  <section class="card"><div class="label">多裝置同步（GitHub）</div>
+    <p class="note">移除球桿不會刪掉它的舊紀錄，距離表仍會顯示在最下方。</p></div></details>
+  <details class="card fold" data-sec="sec2" ${S.openSec.sec2?'open':''}><summary><span>多裝置同步（GitHub）</span><span class="sumv">${sync.token?(sync.status==='ok'?'已同步':sync.status==='syncing'?'同步中':'需留意'):'未設定'}</span><span class="chev" aria-hidden="true"></span></summary><div class="fold-body">
     ${sync.token?`<p class="note" id="sync-state">${syncText()[1]}</p>
       <div class="addrow"><button class="btn" id="sync-now" type="button">立即同步</button>
       <button class="btn ghost" id="sync-off" type="button">${S.armed==='sync-off'?'確定中斷這台裝置':'中斷這台裝置'}</button></div>
       <p class="note">每台裝置都貼上同一把金鑰，就會自動找到同一份資料。中斷只會移除這台裝置上的金鑰，雲端資料不會刪除。</p>`
     :`<p class="note">貼上 GitHub 金鑰（只需要 gist 權限）後，紀錄會存到你帳號裡的私人 Gist，手機、平板、電腦都會同步。</p>
       <form class="addrow" id="tokenform"><input id="token-in" type="password" autocomplete="off" placeholder="ghp_ 開頭的金鑰"><button class="btn" type="submit">連結</button></form>`}
-  </section>
-  <section class="card"><div class="label">挖起桿揮桿幅度（%）</div>
-    <form class="addrow" id="pctform"><input id="pct-in" inputmode="decimal" value="${S.pcts.join(', ')}" aria-label="揮桿幅度百分比"><button class="btn" type="submit">儲存</button></form>
-    <p class="note">用逗號分隔，預設是 100% 到 10%，每 10% 一格。名稱以「°」結尾的球桿（如 48°、54°、58°）會用這組幅度記錄，其他球桿維持出力／正常全揮。</p></section>
-  <section class="card"><div class="label">距離單位</div>
+  </div></details>
+  <details class="card fold" data-sec="sec3" ${S.openSec.sec3?'open':''}><summary><span>挖起桿與 PW 揮桿幅度（%）</span><span class="chev" aria-hidden="true"></span></summary><div class="fold-body">
+    <div class="pctlist">${S.clubs.filter(isWedge).map((c,i)=>`<form class="pctform" data-pclub="${esc(c)}">
+      <label class="pctname" for="pct-in-${i}">${esc(c)}${S.pctMap[c]?'':'<small>預設</small>'}</label>
+      <input id="pct-in-${i}" inputmode="decimal" value="${pctsFor(c).join(', ')}" aria-label="${esc(c)} 揮桿幅度">
+      <button class="btn" type="submit">儲存</button>
+      ${S.pctMap[c]?`<button class="mini wide" type="button" data-pctreset="${esc(c)}">改回預設</button>`:''}</form>`).join('')}
+      <form class="pctform def" data-pclub="">
+      <label class="pctname" for="pct-in-def">預設</label>
+      <input id="pct-in-def" inputmode="decimal" value="${S.pcts.join(', ')}" aria-label="預設揮桿幅度">
+      <button class="btn" type="submit">儲存</button></form></div>
+    <p class="note">每支球桿可以各自設定，用逗號分隔，例如 54° 填 100, 80, 60, 40, 20。標示「預設」的球桿使用最下面的預設值（100% 到 10%，每 10% 一格），之後新增的挖起桿也會先用預設值。PW 和名稱以「°」結尾的球桿會用百分比記錄，並可選開桿面、標準、關桿面；其他球桿維持出力／正常全揮。舊紀錄不會因修改而消失，距離表仍會顯示。</p></div></details>
+  <details class="card fold" data-sec="sec4" ${S.openSec.sec4?'open':''}><summary><span>距離單位</span><span class="sumv">${S.unit==='m'?'公尺':'碼'}</span><span class="chev" aria-hidden="true"></span></summary><div class="fold-body">
     <div class="seg two"><button data-unit="yd" aria-pressed="${S.unit==='yd'}">碼</button><button data-unit="m" aria-pressed="${S.unit==='m'}">公尺</button></div>
-    <p class="note">切換單位會自動換算所有舊紀錄。</p></section>
-  <section class="card"><div class="label">匯出紀錄（CSV）</div>
+    <p class="note">切換單位會自動換算所有舊紀錄。</p></div></details>
+  <details class="card fold" data-sec="sec5" ${S.openSec.sec5?'open':''}><summary><span>匯出紀錄（CSV）</span><span class="chev" aria-hidden="true"></span></summary><div class="fold-body">
     <button class="btn ghost" id="export">複製全部紀錄</button>
     <textarea id="csv" readonly hidden></textarea>
-    <p class="note">複製後可以貼到 Excel 或 Google 試算表。</p></section>
-  <section class="card"><div class="label">選桿邏輯（攻果嶺）</div>
+    <p class="note">複製後可以貼到 Excel 或 Google 試算表。</p></div></details>
+  <details class="card fold" data-sec="sec6" ${S.openSec.sec6?'open':''}><summary><span>距離統計方式</span><span class="sumv">${S.statMode==='mean'?'全部平均':'排除異常球'}</span><span class="chev" aria-hidden="true"></span></summary><div class="fold-body">
+    <div class="seg two"><button data-stat="mad" aria-pressed="${S.statMode!=='mean'}">排除異常球（建議）</button><button data-stat="mean" aria-pressed="${S.statMode==='mean'}">全部平均</button></div>
+    <ol class="logic">
+      <li><b>6 球以上：用 MAD 找出異常球。</b>先找這組 carry 的中位數，再算每球和中位數相差多少，取這些差距的中位數（MAD）。MAD 乘以 1.48 換算成標準差的大小，作為「正常落差」，最少 2 碼。</li>
+      <li><b>異常門檻：</b>比中位數短超過 2.5 倍正常落差、或長超過 3 倍，就視為異常，不計入平均。打短多半是打肥、打薄，所以打短的門檻較嚴。</li>
+      <li><b>3～5 球：</b>球數太少，不排除任何球，改用中位數，避免單一球影響太大。<b>少於 3 球：</b>直接平均。</li>
+      <li><b>只用 carry 判斷：</b>滾動受地面軟硬影響大，不拿來判斷。被排除的球，滾動與總距離也一起不計。</li>
+      <li><b>不會刪除資料：</b>被排除的球在明細和全部紀錄中以灰色標示「異常」，你可以自行判斷，需要時再編輯或刪除。</li>
+      <li><b>全部平均：</b>所有球直接取平均，不排除任何球。</li>
+      <li>每支球桿、每種揮法、每種桿面各自分開計算。選桿頁的落差（±）也是用排除異常後的球計算。</li>
+    </ol></div></details>
+  <details class="card fold" data-sec="sec7" ${S.openSec.sec7?'open':''}><summary><span>選桿邏輯（攻果嶺）</span><span class="chev" aria-hidden="true"></span></summary><div class="fold-body">
     <ol class="logic">
       <li><b>只填總距離：一般攻果嶺。</b>找平均總距離最接近目標的組合。選「寧長勿短」時，打短 1 碼算 1.5 碼誤差、打長 1 碼算 1 碼；「寧短勿長」則相反。</li>
       <li><b>只填 carry：必須飛過。</b>用「穩定 carry 下限」判斷，也就是平均 carry 減掉你這個組合的落差。下限要大於等於目標才列為首選，否則標示「可能飛不過」。符合的組合中挑 carry 最接近目標的，避免拿太長的桿飛過果嶺。</li>
       <li><b>兩個都填：飛過障礙＋停在目標附近。</b>先要求穩定 carry 下限飛過障礙，再挑總距離最接近目標的。若平常的滾動比「目標總距離 − carry」多 3 碼以上，會往後排並標示「可能滾過頭」，開桿面或高拋的挖起桿因此較容易被推薦。</li>
-      <li><b>揮法優先順序：</b>鐵桿和木桿以正常全揮最優先，3/4 揮、半揮依序往後，出力全揮放最後。挖起桿的各種幅度不扣分。開桿面平常稍微往後排，只有在滾動空間不夠時才容易排到前面。</li>
-      <li><b>穩定度與資料量：</b>落差越小越優先。少於 3 球的組合往後排；還沒有紀錄的球桿用一般距離估算，標示「預估」並排更後面。落差在 5 球以上時去掉最遠和最近各一球計算；球數不足時以 carry 的 5% 估算，最少 3 碼。</li>
-      <li><b>結果顯示：</b>一個首選，加上偏長、偏短和其他選擇各一，每個都附上判斷理由。</li>
-    </ol></section>${statusLine()}`;
+      <li><b>揮法優先順序：</b>鐵桿和木桿以正常全揮最優先，3/4 揮、半揮依序往後，出力全揮放最後。挖起桿與 PW 的各種幅度不扣分。開桿面和關桿面平常稍微往後排；兩欄都填且滾動空間不夠時，滾得少的開桿面較容易排到前面。</li>
+      <li><b>穩定度與資料量：</b>落差越小越優先，落差依「距離統計方式」計算；不到 3 球時以 carry 的 5% 估算，最少 3 碼。少於 3 球的組合往後排；還沒有紀錄的球桿用一般距離估算，標示「預估」並排更後面。</li>
+      <li><b>結果顯示：</b>依分數排出前 5 名。右邊大字是平均總距離（只填 carry 時是平均 carry），下方是和目標差幾碼，3 碼以內以綠色標示。小標籤依序是：能否飛過與餘裕、平常滾動、落差（±）、紀錄球數。紅色標籤表示可能飛不過或滾過頭。</li>
+    </ol></div></details>${statusLine()}`;
 }
 function statusLine(){const[c,t]=syncText();return `<p class="status ${c}" id="syncline">${t}</p>`}
 function viewDetail(){
   if(!S.detail)return'';
-  const [club,swing]=S.detail, open=S.face==='open', shots=match(club,swing,open), st=statsFor(shots);
+  const [club,swing]=S.detail, face=S.face, shots=match(club,swing,face), st=statsFor(shots);
   return `<div class="sheet-bg" data-close="1"><div class="sheet" role="dialog" aria-label="明細">
-    <div class="sheet-head"><h2>${esc(club)}・${swName(swing)}${open?'・開桿面':''}</h2><button class="x" data-close="1">關閉</button></div>
-    ${st.n?`<div class="stats"><div class="stat"><small>平均 carry</small><b>${r0(st.carry)}</b></div><div class="stat"><small>平均總距離</small><b>${r0(st.total)}</b></div><div class="stat"><small>carry 範圍</small><b>${r0(st.min)}–${r0(st.max)}</b></div></div>
+    <div class="sheet-head"><h2>${esc(club)}・${swName(swing)}${faceTag(face)}</h2><button class="x" data-close="1">關閉</button></div>
+    ${st.n?`<div class="stats"><div class="stat"><small>平均總距離</small><b>${r0(st.total)}</b></div><div class="stat"><small>平均 carry</small><b>${r0(st.carry)}</b></div><div class="stat"><small>carry 範圍</small><b>${r0(st.min)}–${r0(st.max)}</b></div></div>
+    ${st.out?`<p class="note">有 ${st.out} 球判定為異常，未計入平均。</p>`:''}
     <ul class="shots card">${shots.map(s=>shotRow(s)).join('')}</ul>`:`<p class="empty">這一格還沒有紀錄。</p>`}
   </div></div>`;
 }
 
+function notesFor(c){return(D.notes&&D.notes[c]&&D.notes[c].items)||[]}
+function setNotes(c,items){D.notes=Object.assign({},D.notes,{[c]:{items,updated:Date.now()}});changed()}
+function noteClubs(){const o=clubOrder();return o.concat(Object.keys(D.notes||{}).filter(c=>!o.includes(c)&&notesFor(c).length))}
+function noteItems(c,editable){
+  const items=notesFor(c);
+  if(!items.length)return `<p class="empty">還沒有注意事項。</p>`;
+  return `<ol class="nlist">${items.map(it=>S.notes.edit===it.id
+    ?`<li class="nedit"><form class="nform" id="nedit-form" data-club="${esc(c)}" data-id="${it.id}"><textarea id="nedit-in" rows="3">${esc(it.text)}</textarea>
+       <div class="edbtns"><button class="btn" type="submit">儲存</button><button class="btn ghost" type="button" data-ncancel="1">取消</button>
+       <button class="del ${S.armed==='n'+it.id?'arm':''}" type="button" data-ndel="${it.id}" data-nclubdel="${esc(c)}">${S.armed==='n'+it.id?'確定刪除':'刪除'}</button></div></form></li>`
+    :`<li><button class="nitem" data-nedit="${it.id}">${esc(it.text)}</button></li>`).join('')}</ol>`;
+}
+function viewNotes(){
+  const clubs=noteClubs(), sel=S.notes.club==='all'||clubs.includes(S.notes.club)?S.notes.club:'all';
+  const chips=`<div class="filters"><button class="fchip" data-nclub="all" aria-pressed="${sel==='all'}">全部</button>${clubs.map(c=>{const n=notesFor(c).length;return `<button class="fchip" data-nclub="${esc(c)}" aria-pressed="${sel===c}">${esc(c)}${n?` <small>${n}</small>`:''}</button>`}).join('')}</div>`;
+  let body;
+  if(sel==='all'){
+    const withNotes=clubs.filter(c=>notesFor(c).length);
+    body=withNotes.length?withNotes.map(c=>`<section class="grp"><div class="grp-h"><span class="grp-club">${esc(c)}</span><span class="grp-n">${notesFor(c).length} 項</span></div>${noteItems(c)}</section>`).join('')
+      :`<p class="empty">還沒有任何注意事項。上方選一支球桿，把練球時發現的問題記下來，例如「上桿太快，頂點停一下」。</p>`;
+  }else{
+    body=`<section class="grp"><div class="grp-h"><span class="grp-club">${esc(sel)}</span><span class="grp-n">${notesFor(sel).length} 項・點一項可修改或刪除</span></div>${noteItems(sel)}
+      <form class="nform add" id="nadd-form" data-club="${esc(sel)}"><textarea id="nadd-in" rows="2" placeholder="新增 ${esc(sel)} 的注意事項"></textarea><button class="btn" type="submit">加入</button></form></section>`;
+  }
+  return `<div class="notes-full" role="dialog" aria-label="球桿注意事項">
+    <div class="sheet-head nhead"><h2>球桿注意事項</h2><button class="x" data-close="1">關閉</button></div>${chips}${body}</div>`;
+}
+function noteStrip(c){
+  const items=notesFor(c);
+  return `<button class="notestrip" data-notes="${esc(c)}"><span class="ns-k">${esc(c)} 注意</span><span class="ns-t">${items.length?esc(items[0].text):'尚未記錄，點這裡新增'}</span><span class="ns-n">${items.length>1?items.length+' 項 ':''}›</span></button>`;
+}
 function clubOrder(){const extra=[...new Set(allShots().map(s=>s.club))].filter(c=>!S.clubs.includes(c));return S.clubs.concat(extra)}
 function editRow(s){
   const clubs=clubOrder(); const sw=swingsFor(s.club).slice(); if(!sw.some(x=>x.k===s.swing))sw.push({k:s.swing,n:swName(s.swing)});
@@ -513,7 +631,7 @@ function editRow(s){
       <label>Carry（${U()}）<input id="ed-carry" inputmode="decimal" value="${r0(s.carry)}"></label>
       <label>滾動（${U()}）<input id="ed-roll" inputmode="decimal" value="${r0(s.roll)}"></label>
     </div>
-    <label class="edopen"><input type="checkbox" id="ed-open" ${s.open?'checked':''}> 開桿面</label>
+    <div class="edgrid one"><label>桿面<select id="ed-face">${(facesFor(s.club).includes(faceOf(s))?facesFor(s.club):facesFor(s.club).concat(faceOf(s))).map(f=>`<option value="${f}" ${f===faceOf(s)?'selected':''}>${FACES[f]}</option>`).join('')}</select></label></div>
     <div class="edbtns"><button class="btn" type="submit">儲存</button><button class="btn ghost" type="button" data-edcancel="1">取消</button>
       <button class="del ${S.armed===s.id?'arm':''}" type="button" data-del="${s.id}">${S.armed===s.id?'確定刪除':'刪除'}</button></div>
     <p class="note">${fmtDate(s.t)} 記錄</p></form></li>`;
@@ -525,9 +643,9 @@ function viewAll(){
   const clubs=clubOrder().filter(c=>byClub[c]);
   const f=S.all.filter!=='all'&&byClub[S.all.filter]?S.all.filter:'all';
   const shown=f==='all'?clubs:[f];
-  const groups=shown.map(c=>{const list=byClub[c],st=statsFor(list.filter(x=>!x.open&&(x.swing==='full'||x.swing==='pct100')));
-    return `<section class="grp"><div class="grp-h"><span class="grp-club">${esc(c)}</span><span class="grp-n">${list.length} 球${st.n?`・正常全揮平均 carry ${r0(st.carry)}`:''}</span></div>
-    <ul class="shots allshots">${list.map(s=>S.all.edit===s.id?editRow(s):`<li><span class="d">${fmtDate(s.t)}<br>${swName(s.swing)}${s.open?'・開桿面':''}</span>
+  const groups=shown.map(c=>{const list=byClub[c],st=statsFor(list.filter(x=>faceOf(x)==='square'&&(x.swing==='full'||x.swing==='pct100')));
+    return `<section class="grp"><div class="grp-h"><span class="grp-club">${esc(c)}</span><span class="grp-n">${list.length} 球${st.n?`・正常全揮平均總距離 ${r0(st.total)}`:''}</span></div>
+    <ul class="shots allshots">${list.map(s=>S.all.edit===s.id?editRow(s):`<li class="${OUT.has(s.id)?'odd':''}"><span class="d">${fmtDate(s.t)}${OUT.has(s.id)?' <em class="oddtag">異常</em>':''}<br>${swName(s.swing)}${faceTag(faceOf(s))}</span>
       <span class="n">${r0(s.carry)}<span> +${r0(s.roll)} = ${r0(s.carry+s.roll)}</span></span>
       <button class="del" data-edit="${s.id}">編輯</button></li>`).join('')}</ul></section>`}).join('');
   return `<div class="sheet-bg" data-close="1"><div class="sheet full" role="dialog" aria-label="全部紀錄">
@@ -544,12 +662,13 @@ function render(){
   const c=document.getElementById('in-carry'),r=document.getElementById('in-roll');
   const cv=c?c.value:'',rv=r?r.value:'';
   app.innerHTML=S.mode==='loading'?'<p class="sub">載入中…</p>':S.view==='log'?viewLog():S.view==='table'?viewTable():S.view==='pick'?viewPick():viewSet();
+  OUT=computeOutliers();
   const sh=document.getElementById('sheet'), kept={};
   sh.querySelectorAll('input[id],select[id]').forEach(el=>kept[el.id]=el.type==='checkbox'?el.checked:el.value);
-  const scroller=sh.querySelector('.sheet'), top=scroller?scroller.scrollTop:0;
-  sh.innerHTML=S.all.open?viewAll():viewDetail();
+  const scroller=sh.querySelector('.sheet,.notes-full'), top=scroller?scroller.scrollTop:0;
+  sh.innerHTML=S.notes.open?viewNotes():S.all.open?viewAll():viewDetail();
   for(const id in kept){const el=document.getElementById(id);if(el&&sh.contains(el)){if(el.type==='checkbox')el.checked=kept[id];else el.value=kept[id]}}
-  const sc2=sh.querySelector('.sheet');if(sc2)sc2.scrollTop=top;
+  const sc2=sh.querySelector('.sheet,.notes-full');if(sc2)sc2.scrollTop=top;
   document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.view===S.view));
   if(S.view==='log'){const c2=document.getElementById('in-carry'),r2=document.getElementById('in-roll');if(c2){c2.value=cv;r2.value=rv;updTotal()}}
   if(keep){const el=document.getElementById(keep);if(el&&el.tagName==='INPUT')el.focus()}
@@ -565,11 +684,14 @@ function doSave(){
   const c=num(ci.value),r=num(ri.value)||0;if(c==null||c<=0)return;
   addShot(c,r);ci.value='';ri.value='';render();document.getElementById('in-carry').focus();
 }
+document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.dataset&&d.dataset.sec)S.openSec[d.dataset.sec]=d.open},true);
 document.addEventListener('change',e=>{
   if(e.target.id!=='ed-club')return;
   const sel=document.getElementById('ed-swing'),cur=sel.value,list=swingsFor(e.target.value);
   sel.innerHTML=list.map(x=>`<option value="${x.k}">${x.n}</option>`).join('');
   sel.value=list.some(x=>x.k===cur)?cur:(isWedge(e.target.value)?list[0].k:'full');
+  const fs=document.getElementById('ed-face'),fcur=fs.value,fl=facesFor(e.target.value);
+  fs.innerHTML=fl.map(f=>`<option value="${f}">${FACES[f]}</option>`).join('');fs.value=fl.includes(fcur)?fcur:'square';
 });
 document.addEventListener('input',e=>{
   if(e.target.id==='in-carry'||e.target.id==='in-roll')updTotal();
@@ -581,20 +703,29 @@ document.addEventListener('keydown',e=>{
   else if(e.target.id==='in-roll'){e.preventDefault();doSave()}
 });
 document.addEventListener('submit',e=>{
+  if(e.target.id==='nadd-form'){e.preventDefault();const c=e.target.dataset.club,el=document.getElementById('nadd-in'),v=el.value.trim();
+    if(!v){toast('請輸入內容');return}
+    setNotes(c,notesFor(c).concat({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),text:v,t:Date.now()}));
+    el.value='';render();toast(`已加入 ${c} 注意事項`);return}
+  if(e.target.id==='nedit-form'){e.preventDefault();const c=e.target.dataset.club,id=e.target.dataset.id,v=document.getElementById('nedit-in').value.trim();
+    if(!v){toast('內容不能空白，要移除請按刪除');return}
+    setNotes(c,notesFor(c).map(x=>x.id===id?Object.assign({},x,{text:v}):x));S.notes.edit=null;render();toast('已更新');return}
   if(e.target.id==='edform'){e.preventDefault();
     const id=e.target.dataset.id,old=D.shots[id];if(!old)return;
     const c=num(document.getElementById('ed-carry').value),r=num(document.getElementById('ed-roll').value)||0;
     if(c==null||c<=0){toast('請輸入 carry 距離');return}
     const keepOld=(v,o)=>Math.round(toDisp(o))===v?o:Math.round(fromIn(v)*10)/10;
     D.shots[id]=Object.assign({},old,{club:document.getElementById('ed-club').value,swing:document.getElementById('ed-swing').value,
-      open:document.getElementById('ed-open').checked,carry:keepOld(c,old.carry),roll:keepOld(r,old.roll),u:Date.now()});
+      face:document.getElementById('ed-face').value,open:document.getElementById('ed-face').value==='open',carry:keepOld(c,old.carry),roll:keepOld(r,old.roll),u:Date.now()});
     rebuild();changed();S.all.edit=null;render();toast('已更新這一球');return}
   if(e.target.id==='tokenform'){e.preventDefault();const v=document.getElementById('token-in').value.trim();
     if(!v){toast('請貼上金鑰');return}sync.token=v;sync.gistId='';saveCfg();render();doSync();return}
-  if(e.target.id==='pctform'){e.preventDefault();
-    const v=[...new Set(document.getElementById('pct-in').value.split(/[,，、\s]+/).map(x=>Math.round(parseFloat(x))).filter(n=>n>0&&n<=150))].sort((a,b)=>b-a);
+  if(e.target.classList.contains('pctform')){e.preventDefault();
+    const club=e.target.dataset.pclub, inp=e.target.querySelector('input');
+    const v=[...new Set(inp.value.split(/[,，、\s]+/).map(x=>Math.round(parseFloat(x))).filter(n=>n>0&&n<=150))].sort((a,b)=>b-a);
     if(!v.length){toast('請輸入至少一個百分比');return}
-    S.pcts=v;fixSel();persistSettings();render();toast('已更新揮桿幅度');return}
+    if(club){S.pctMap=Object.assign({},S.pctMap,{[club]:v})}else S.pcts=v;
+    fixSel();persistSettings();render();toast(`已更新${club||'預設'}的揮桿幅度`);return}
   if(e.target.id!=='addform')return;e.preventDefault();
   const v=document.getElementById('add-club').value.trim();if(!v)return;
   if(S.clubs.includes(v)){toast('這支球桿已經在清單裡');return}
@@ -603,14 +734,22 @@ document.addEventListener('submit',e=>{
 document.addEventListener('click',e=>{
   const b=e.target.closest('button,[data-close]');if(!b)return;const d=b.dataset;
   if(d.view){S.view=d.view;S.armed=null;S.detail=null;render();window.scrollTo(0,0);return}
-  if(d.close&&(e.target===b||b.tagName==='BUTTON')){S.detail=null;S.all.open=false;S.all.edit=null;S.armed=null;render();return}
+  if(d.close&&(e.target===b||b.tagName==='BUTTON')){S.detail=null;S.notes.open=false;S.notes.edit=null;S.all.open=false;S.all.edit=null;S.armed=null;render();return}
+  if(d.notes!==undefined){S.notes={open:true,club:d.notes||'all',edit:null};S.armed=null;render();const sc=document.querySelector('#sheet .notes-full');if(sc)sc.scrollTop=0;return}
+  if(d.nclub){S.notes.club=d.nclub;S.notes.edit=null;S.armed=null;render();return}
+  if(d.nedit){S.notes.edit=d.nedit;S.armed=null;render();const t=document.getElementById('nedit-in');if(t)t.focus();return}
+  if(d.ncancel){S.notes.edit=null;S.armed=null;render();return}
+  if(d.ndel){if(S.armed==='n'+d.ndel){setNotes(d.nclubdel,notesFor(d.nclubdel).filter(x=>x.id!==d.ndel));S.notes.edit=null;S.armed=null;toast('已刪除');render()}else{S.armed='n'+d.ndel;render()}return}
   if(b.id==='open-all'){S.all.open=true;S.all.edit=null;S.armed=null;render();return}
   if(d.allf){S.all.filter=d.allf;S.all.edit=null;S.armed=null;render();const sc=document.querySelector('#sheet .sheet');if(sc)sc.scrollTop=0;return}
   if(d.edit){S.all.edit=d.edit;S.armed=null;render();return}
   if(d.edcancel){S.all.edit=null;S.armed=null;render();return}
   if(d.club!==undefined){S.sel.club=d.club;fixSel();S.armed=null;render();return}
   if(d.swing){S.sel.swing=d.swing;S.armed=null;render();return}
-  if(b.id==='open-t'){S.sel.open=!S.sel.open;render();return}
+  if(b.id==='open-t'){S.sel.face=S.sel.face==='open'?'square':'open';render();return}
+  if(d.sface){S.sel.face=d.sface;render();return}
+  if(d.pctreset){const m=Object.assign({},S.pctMap);delete m[d.pctreset];S.pctMap=m;fixSel();persistSettings();render();toast(`${d.pctreset} 已改回預設`);return}
+  if(d.stat){S.statMode=d.stat;persistSettings();render();return}
   if(b.id==='save'){doSave();return}
   if(b.id==='sync-now'){doSync();return}
   if(b.id==='sync-off'){if(S.armed==='sync-off'){sync.token='';sync.gistId='';sync.status='off';saveCfg();S.armed=null;toast('已中斷這台裝置的同步')}else S.armed='sync-off';render();return}
@@ -623,8 +762,8 @@ document.addEventListener('click',e=>{
   if(d.down!==undefined){const i=+d.down,a=S.clubs.slice();[a[i+1],a[i]]=[a[i],a[i+1]];S.clubs=a;persistSettings();render();return}
   if(d.rm!==undefined){S.clubs=S.clubs.filter((_,i)=>i!==+d.rm);fixSel();persistSettings();render();return}
   if(b.id==='export'){
-    const rows=[['日期時間','球桿','揮桿','開桿面','carry('+U()+')','滾動('+U()+')','總距離('+U()+')']]
-      .concat(allShots().reverse().map(s=>{const t=new Date(s.t);return[`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())} ${pad(t.getHours())}:${pad(t.getMinutes())}`,s.club,swName(s.swing),s.open?'是':'否',r0(s.carry),r0(s.roll),r0(s.carry+s.roll)]}));
+    const rows=[['日期時間','球桿','揮桿','桿面','carry('+U()+')','滾動('+U()+')','總距離('+U()+')']]
+      .concat(allShots().reverse().map(s=>{const t=new Date(s.t);return[`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())} ${pad(t.getHours())}:${pad(t.getMinutes())}`,s.club,swName(s.swing),FACES[faceOf(s)],r0(s.carry),r0(s.roll),r0(s.carry+s.roll)]}));
     const csv=rows.map(r=>r.map(x=>/[",\n]/.test(String(x))?`"${String(x).replace(/"/g,'""')}"`:x).join(',')).join('\n');
     const ta=document.getElementById('csv');ta.value=csv;
     const fallback=()=>{ta.hidden=false;ta.focus();ta.select();toast('請長按選取文字後複製')};
