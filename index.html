@@ -190,6 +190,44 @@ li.odd .n{opacity:.45;text-decoration:line-through}
 .nform{display:flex;flex-direction:column;gap:8px;padding:8px 0}
 .nform.add{flex-direction:row;align-items:flex-end;border-top:1px dashed var(--line);margin-top:6px;padding-top:12px}
 .nform textarea{flex:1;min-width:0;width:100%;font:inherit;font-size:16px;line-height:1.5;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);resize:vertical}
+.cambtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;border:1px solid var(--green);background:var(--surface);color:var(--green);border-radius:12px;padding:12px;font-weight:600}
+.camico{width:20px;height:15px;border:2px solid currentColor;border-radius:4px;position:relative}
+.camico::after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;border:2px solid currentColor;border-radius:50%;transform:translate(-50%,-50%)}
+.camtag{font-style:normal;font-size:11px;padding:0 6px;border-radius:4px;background:var(--green-soft);color:var(--green)}
+.xline{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;padding-bottom:2px}
+body.cam-on{overflow:hidden}
+.cam{position:fixed;inset:0;z-index:20;background:#000;color:#fff;display:flex;flex-direction:column;
+  padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+.cam-top{display:flex;align-items:center;gap:8px;padding:8px 12px}
+.cam .x{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:#fff;flex:0 0 auto}
+.cam-status{flex:1;min-width:0;text-align:center;font-size:13.5px;line-height:1.35}
+.cam-status.ok{color:#8BE0AE}.cam-status.busy{color:#F0C23A}.cam-status.bad{color:#FF9A90}
+.cam-stage{position:relative;flex:1;min-height:0}
+.cam-stage video,.cam-stage canvas{position:absolute;inset:0;width:100%;height:100%}
+.cam-stage video{object-fit:contain}
+.cam-stage canvas{touch-action:none}
+.cam-bar{background:#0E1511;padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;max-height:48%;overflow-y:auto}
+.cam-calibbar p{margin:0;font-size:13px;line-height:1.5;color:#E4ECE6}
+.cam-clubs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.cam-clubs .chip{flex:0 0 auto;min-width:50px;padding:6px 8px;font-size:17px;background:#16201A;border-color:#29372E;color:#E4ECE6}
+.cam-clubs .chip[aria-pressed="true"]{background:#4FA374;border-color:#4FA374;color:#0B130E}
+.cam-row{display:flex;gap:8px}
+.cam-row select{flex:1;font:inherit;font-size:15px;padding:7px 8px;border-radius:8px;border:1px solid #29372E;background:#16201A;color:#E4ECE6}
+.cam-warn{font-size:13px;line-height:1.5;background:#3A2A06;border:1px solid #F0C23A;border-radius:10px;padding:8px 10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.cam-warn .btn{padding:5px 10px;font-size:13px}
+.cam-live{font-size:12px;color:#93A198;font-variant-numeric:tabular-nums;min-height:1em}
+.cam-recent{list-style:none;margin:0;padding:0;font-variant-numeric:tabular-nums}
+.cam-recent li{display:flex;align-items:baseline;gap:8px;padding:5px 0;border-top:1px solid #29372E;font-size:14px}
+.cam-recent li:first-child{border-top:0}
+.cr-c{font-family:var(--num);font-size:19px;font-weight:700;min-width:42px}
+.cr-s{flex:1;color:#93A198;font-size:12.5px}
+.cr-n b{font-family:var(--num);font-size:19px}
+.cr-empty{color:#93A198;font-size:13px}
+.cam-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cam-btns .btn{padding:11px;font-size:15px}
+.cam .btn{background:#4FA374;border-color:#4FA374;color:#0B130E}
+.cam .btn.ghost{background:transparent;color:#E4ECE6;border-color:#29372E}
+.cam .btn:disabled{opacity:.4}
 .note{font-size:12.5px;color:var(--muted);line-height:1.6}
 .tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);
   padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);z-index:5}
@@ -233,6 +271,20 @@ textarea{width:100%;min-height:120px;font:12px/1.4 ui-monospace,Menlo,monospace;
 </nav>
 <div id="sheet"></div>
 <div id="toast" class="toast" hidden></div>
+<div id="cam" class="cam" hidden>
+  <div class="cam-top"><button id="cam-close" class="x" type="button">關閉</button><div id="cam-status" class="cam-status"></div><button id="cam-calib" class="x" type="button">校正</button></div>
+  <div class="cam-stage" id="cam-stage"><video id="cam-video" playsinline muted autoplay></video><canvas id="cam-ov"></canvas></div>
+  <div class="cam-bar">
+    <div id="cam-calibbar" class="cam-calibbar" hidden><p>把四個黃色圓點拖到 RG 數據欄的四個角：上緣對齊有名字的那一列頂端，下緣對齊「倒旋／側旋」那一列底部。綠框要框住數字。</p>
+      <div class="cam-btns"><button id="cam-test" class="btn" type="button">測試讀取</button><button id="cam-reset" class="btn ghost" type="button">重設位置</button></div></div>
+    <div class="cam-clubs" id="cam-clubs"></div>
+    <div class="cam-row"><select id="cam-swing" aria-label="揮法"></select><select id="cam-face" aria-label="桿面"></select></div>
+    <div id="cam-live" class="cam-live"></div>
+    <div id="cam-warn" class="cam-warn" hidden></div>
+    <ul id="cam-recent" class="cam-recent"></ul>
+    <div class="cam-btns"><button id="cam-undo" class="btn ghost" type="button">撤銷上一球</button><button id="cam-run" class="btn" type="button">開始自動記錄</button></div>
+  </div>
+</div>
 
 <script>
 const SWINGS=[{k:'power',n:'出力全揮'},{k:'full',n:'正常全揮'},{k:'three',n:'3/4 揮'},{k:'half',n:'半揮'}];
@@ -501,6 +553,7 @@ function viewLog(){
     <div class="total"><small>總距離</small><b id="tot">—</b></div>
   </section>
   <button class="save" id="save" disabled>記錄這一球</button>
+  <button class="cambtn" id="open-cam" type="button"><span class="camico" aria-hidden="true"></span>鏡頭自動記錄（RG 模擬器）</button>
   <section class="card"><div class="combo"><h3>${esc(S.sel.club)}・${swName(S.sel.swing)}${faceTag(S.sel.face)}</h3>
     ${st.n?`<span class="avg">總 <b>${r0(st.total)}</b>・carry ${r0(st.carry)}・${st.n} 球${st.out?`（排除 ${st.out}）`:''}</span>`:''}</div>
     ${combo.length?`<ul class="shots">${combo.slice(0,8).map(s=>shotRow(s)).join('')}</ul>`:`<p class="empty">這個組合還沒有紀錄。打一球，輸入 carry 和滾動後按「記錄這一球」。</p>`}
@@ -622,6 +675,8 @@ function noteStrip(c){
   return `<button class="notestrip" data-notes="${esc(c)}"><span class="ns-k">${esc(c)} 注意</span><span class="ns-t">${items.length?esc(items[0].text):'尚未記錄，點這裡新增'}</span><span class="ns-n">${items.length>1?items.length+' 項 ':''}›</span></button>`;
 }
 function clubOrder(){const extra=[...new Set(allShots().map(s=>s.club))].filter(c=>!S.clubs.includes(c));return S.clubs.concat(extra)}
+function extrasLine(s){const m=s.m;if(!m)return'';const f=(k,u)=>m[k]!=null?`<span>${RG_LABEL[k]} ${m[k]}${u}</span>`:'';
+  return `<div class="xline">${f('cs',' mph')}${f('bs',' mph')}${f('sf','')}${f('la','°')}${f('bsp',' rpm')}${f('ssp',' rpm')}</div>`}
 function editRow(s){
   const clubs=clubOrder(); const sw=swingsFor(s.club).slice(); if(!sw.some(x=>x.k===s.swing))sw.push({k:s.swing,n:swName(s.swing)});
   return `<li class="editing"><form class="edform" id="edform" data-id="${s.id}">
@@ -634,7 +689,7 @@ function editRow(s){
     <div class="edgrid one"><label>桿面<select id="ed-face">${(facesFor(s.club).includes(faceOf(s))?facesFor(s.club):facesFor(s.club).concat(faceOf(s))).map(f=>`<option value="${f}" ${f===faceOf(s)?'selected':''}>${FACES[f]}</option>`).join('')}</select></label></div>
     <div class="edbtns"><button class="btn" type="submit">儲存</button><button class="btn ghost" type="button" data-edcancel="1">取消</button>
       <button class="del ${S.armed===s.id?'arm':''}" type="button" data-del="${s.id}">${S.armed===s.id?'確定刪除':'刪除'}</button></div>
-    <p class="note">${fmtDate(s.t)} 記錄</p></form></li>`;
+    <p class="note">${fmtDate(s.t)} 記錄${s.src==='cam'?'・鏡頭自動記錄'+(s.rg?`（畫面球桿 ${esc(s.rg)}）`:''):''}</p>${extrasLine(s)}</form></li>`;
 }
 function viewAll(){
   if(!S.all.open)return'';
@@ -645,14 +700,286 @@ function viewAll(){
   const shown=f==='all'?clubs:[f];
   const groups=shown.map(c=>{const list=byClub[c],st=statsFor(list.filter(x=>faceOf(x)==='square'&&(x.swing==='full'||x.swing==='pct100')));
     return `<section class="grp"><div class="grp-h"><span class="grp-club">${esc(c)}</span><span class="grp-n">${list.length} 球${st.n?`・正常全揮平均總距離 ${r0(st.total)}`:''}</span></div>
-    <ul class="shots allshots">${list.map(s=>S.all.edit===s.id?editRow(s):`<li class="${OUT.has(s.id)?'odd':''}"><span class="d">${fmtDate(s.t)}${OUT.has(s.id)?' <em class="oddtag">異常</em>':''}<br>${swName(s.swing)}${faceTag(faceOf(s))}</span>
+    <ul class="shots allshots">${list.map(s=>S.all.edit===s.id?editRow(s):`<li class="${OUT.has(s.id)?'odd':''}"><span class="d">${fmtDate(s.t)}${OUT.has(s.id)?' <em class="oddtag">異常</em>':''}<br>${swName(s.swing)}${faceTag(faceOf(s))}${s.src==='cam'?' <em class="camtag">鏡頭</em>':''}</span>
       <span class="n">${r0(s.carry)}<span> +${r0(s.roll)} = ${r0(s.carry+s.roll)}</span></span>
-      <button class="del" data-edit="${s.id}">編輯</button></li>`).join('')}</ul></section>`}).join('');
+      <button class="del" data-edit="${s.id}">編輯</button>${extrasLine(s)}</li>`).join('')}</ul></section>`}).join('');
   return `<div class="sheet-bg" data-close="1"><div class="sheet full" role="dialog" aria-label="全部紀錄">
     <div class="sheet-head"><h2>全部紀錄・${shots.length} 球</h2><button class="x" data-close="1">關閉</button></div>
     ${shots.length?`<div class="filters"><button class="fchip" data-allf="all" aria-pressed="${f==='all'}">全部</button>${clubs.map(c=>`<button class="fchip" data-allf="${esc(c)}" aria-pressed="${f===c}">${esc(c)} <small>${byClub[c].length}</small></button>`).join('')}</div>${groups}`
     :`<p class="empty">還沒有任何紀錄。</p>`}
   </div></div>`;
+}
+
+/* ---------- RG simulator camera auto-record ---------- */
+const TESS_SRC='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+// Field boxes inside the calibrated panel. (0,0)=top-left corner, (1,1)=bottom-right corner.
+// Top edge = top of the player card (name row); bottom edge = bottom of the 倒旋 / 側旋 row.
+const RG_FIELDS={shots:[.5,.065,.74,.135],total:[.31,.16,.71,.26],carry:[.06,.35,.44,.45],roll:[.53,.355,.91,.455],
+  cs:[.07,.53,.47,.63],bs:[.55,.535,.95,.635],sf:[.08,.71,.47,.805],la:[.56,.715,.96,.81],bsp:[.06,.89,.47,.99],ssp:[.55,.895,.96,.99],club:[.04,1.03,.23,1.11]};
+const RG_KEY=['shots','total','carry','roll'], RG_EXTRA=['cs','bs','sf','la','bsp','ssp'];
+const RG_LABEL={shots:'擊球數',total:'總距離',carry:'落點',roll:'滾動',cs:'桿頭速度',bs:'球速',sf:'擊球效率',la:'起飛角度',bsp:'倒旋',ssp:'側旋',club:'球桿'};
+const LS_QUAD='yardbook-cam-quad';
+const CAM={open:false,running:false,calib:false,stream:null,worker:null,wl:'',busy:false,quad:null,drag:-1,
+  state:'idle',base:null,pend:null,pendN:0,track:null,lastRec:null,vals:{},hash:{},recent:[],mismatch:null,
+  timer:null,raf:0,wake:null,audio:null,frame:null,lastOk:0};
+
+function camQuadDefault(){return[[.15,.1],[.62,.1],[.62,.62],[.15,.62]]}
+function camLoadQuad(){try{const q=JSON.parse(localStorage.getItem(LS_QUAD)||'null');if(Array.isArray(q)&&q.length===4)return q}catch(e){}return camQuadDefault()}
+function camSaveQuad(){try{localStorage.setItem(LS_QUAD,JSON.stringify(CAM.quad))}catch(e){}}
+// bilinear map from panel (u,v) to normalized video coords
+function camMap(u,v){const[tl,tr,br,bl]=CAM.quad;const top=[tl[0]+(tr[0]-tl[0])*u,tl[1]+(tr[1]-tl[1])*u],bot=[bl[0]+(br[0]-bl[0])*u,bl[1]+(br[1]-bl[1])*u];
+  return[top[0]+(bot[0]-top[0])*v,top[1]+(bot[1]-top[1])*v]}
+function camFieldRect(k){const[u0,v0,u1,v1]=RG_FIELDS[k];const pts=[camMap(u0,v0),camMap(u1,v0),camMap(u1,v1),camMap(u0,v1)];
+  const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);return[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)]}
+
+function camEl(id){return document.getElementById(id)}
+function camStatus(t,kind){const el=camEl('cam-status');if(el){el.textContent=t;el.className='cam-status '+(kind||'')}}
+function camWarn(html){const el=camEl('cam-warn');if(!el)return;el.hidden=!html;el.innerHTML=html||''}
+
+function loadScript(src){return new Promise((res,rej)=>{if(window.Tesseract)return res();const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('load'));document.head.appendChild(s)})}
+async function camWorker(){
+  if(CAM.worker)return CAM.worker;
+  camStatus('載入辨識引擎…第一次約需 10～30 秒');
+  await loadScript(TESS_SRC);
+  CAM.worker=await Tesseract.createWorker('eng',1);
+  await camWL('num');
+  return CAM.worker;
+}
+async function camWL(kind){if(CAM.wl===kind)return;CAM.wl=kind;
+  await CAM.worker.setParameters({tessedit_pageseg_mode:'7',tessedit_char_whitelist:kind==='club'?'WIUSP0123456789':'0123456789.-'})}
+
+/* --- image prep: crop field, scale, Otsu threshold → dark text on white --- */
+function camPrep(k){
+  const v=camEl('cam-video'),W=v.videoWidth,H=v.videoHeight;if(!W)return null;
+  const[x0,y0,x1,y1]=camFieldRect(k);const sx=Math.max(0,x0*W),sy=Math.max(0,y0*H),sw=Math.min(W,x1*W)-sx,sh=Math.min(H,y1*H)-sy;
+  if(sw<4||sh<4)return null;
+  const scale=Math.max(1,Math.min(4,64/sh)),dw=Math.round(sw*scale),dh=Math.round(sh*scale),pad=12;
+  const c=document.createElement('canvas');c.width=dw+pad*2;c.height=dh+pad*2;const g=c.getContext('2d',{willReadFrequently:true});
+  g.imageSmoothingEnabled=true;g.drawImage(CAM.frame,sx,sy,sw,sh,pad,pad,dw,dh);
+  const img=g.getImageData(pad,pad,dw,dh),d=img.data,n=dw*dh,gray=new Uint8Array(n),hist=new Array(256).fill(0);
+  for(let i=0;i<n;i++){const y=(d[i*4]*299+d[i*4+1]*587+d[i*4+2]*114)/1000|0;gray[i]=y;hist[y]++}
+  let sum=0;for(let i=0;i<256;i++)sum+=i*hist[i];let sB=0,wB=0,best=0,th=128;
+  for(let t=0;t<256;t++){wB+=hist[t];if(!wB)continue;const wF=n-wB;if(!wF)break;sB+=t*hist[t];const mB=sB/wB,mF=(sum-sB)/wF,b=wB*wF*(mB-mF)*(mB-mF);if(b>best){best=b;th=t}}
+  let bright=0;for(let i=0;i<n;i++)if(gray[i]>th)bright++;
+  const textBright=bright<n/2;
+  const out=g.createImageData(dw,dh),o=out.data;let bits='';
+  const inkA=new Uint8Array(n);for(let i=0;i<n;i++)inkA[i]=(textBright?gray[i]>th:gray[i]<=th)?1:0;
+  if(k!=='club')camClean(inkA,dw,dh,k==='shots');
+  for(let i=0;i<n;i++){const val=inkA[i]?0:255;o[i*4]=o[i*4+1]=o[i*4+2]=val;o[i*4+3]=255}
+  g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.putImageData(out,pad,pad);
+  // coarse signature for change detection (24x6 grid of ink ratios)
+  const GX=24,GY=6;for(let gy=0;gy<GY;gy++)for(let gx=0;gx<GX;gx++){let ink=0,cnt=0;
+    for(let y=Math.floor(gy*dh/GY);y<Math.floor((gy+1)*dh/GY);y+=2)for(let x=Math.floor(gx*dw/GX);x<Math.floor((gx+1)*dw/GX);x+=2){cnt++;if(o[(y*dw+x)*4]===0)ink++}
+    bits+=cnt&&ink/cnt>.25?'1':'0'}
+  return{canvas:c,bits};
+}
+// Keep the digits: drop unit labels (yds, mph, rpm, deg) and stray marks by component size/position.
+function camClean(ink,w,h,lastGroup){
+  const lab=new Int32Array(w*h).fill(-1),comps=[],st=[];
+  for(let i=0;i<w*h;i++){if(!ink[i]||lab[i]>=0)continue;const c={x0:w,y0:h,x1:0,y1:0,n:0,id:comps.length};st.push(i);lab[i]=c.id;
+    while(st.length){const j=st.pop(),x=j%w,y=(j/w)|0;c.n++;if(x<c.x0)c.x0=x;if(x>c.x1)c.x1=x;if(y<c.y0)c.y0=y;if(y>c.y1)c.y1=y;
+      const nb=[x>0?j-1:-1,x<w-1?j+1:-1,y>0?j-w:-1,y<h-1?j+w:-1];for(const q of nb)if(q>=0&&ink[q]&&lab[q]<0){lab[q]=c.id;st.push(q)}}
+    c.h=c.y1-c.y0+1;c.w=c.x1-c.x0+1;comps.push(c)}
+  const big=comps.filter(c=>c.n>15);if(!big.length)return;
+  const maxH=Math.max(...big.map(c=>c.h));let tall=big.filter(c=>c.h>=.6*maxH).sort((a,b)=>a.x0-b.x0);if(!tall.length)return;
+  if(lastGroup&&tall.length>1){let gi=0,gap=0;for(let i=1;i<tall.length;i++){const g=tall[i].x0-tall[i-1].x1;if(g>gap){gap=g;gi=i}}if(gap>.45*maxH)tall=tall.slice(gi)}
+  const L=Math.min(...tall.map(c=>c.x0)),Rt=Math.max(...tall.map(c=>c.x1)),T=Math.min(...tall.map(c=>c.y0)),B=Math.max(...tall.map(c=>c.y1));
+  const keep=new Set(tall.map(c=>c.id));
+  for(const c of comps){if(keep.has(c.id))continue;const cy=(c.y0+c.y1)/2;
+    const dot=c.h<=.35*maxH&&c.w<=.4*maxH&&c.x0>L&&c.x1<Rt&&c.y1>=B-.3*maxH&&c.y1<=B+.15*maxH;
+    const minus=c.h<=.3*maxH&&c.w>=c.h*1.4&&c.x1<=L+.2*maxH&&c.x0>=L-1.2*maxH&&cy>T+.25*maxH&&cy<B-.25*maxH;
+    if(dot||minus)keep.add(c.id)}
+  for(let i=0;i<w*h;i++)if(ink[i]&&!keep.has(lab[i]))ink[i]=0;
+}
+function camSame(a,b){if(!a||!b||a.length!==b.length)return false;let d=0;for(let i=0;i<a.length;i++)if(a[i]!==b[i]&&++d>3)return false;return true}
+function camParse(k,txt){
+  const t=(txt||'').replace(/\s/g,'').replace(/\.+$/,'');let m;
+  if(k==='shots'){m=t.match(/\d{1,4}/);return m?+m[0]:null}
+  if(k==='sf'){m=t.match(/\d\.\d{2}/);return m?+m[0]:null}
+  if(k==='bsp'||k==='ssp'){m=t.match(/-?\d{1,5}/);return m?+m[0]:null}
+  if(k==='club'){const u=t.toUpperCase().replace(/^1(?=\d)/,'I');m=u.match(/^[WIUSP](\d{0,2})/);return m?m[0]:null}
+  m=t.match(/-?\d{1,3}\.\d/);if(m)return +m[0];
+  m=t.match(/^(-?)(\d{2,4})$/);if(m)return +(m[1]+m[2].slice(0,-1)+'.'+m[2].slice(-1));   // RG always shows one decimal: a lost dot
+  return null;
+}
+async function camRead(k,force){
+  const p=camPrep(k);if(!p)return null;
+  if(!force&&camSame(p.bits,CAM.hash[k])&&k in CAM.vals)return CAM.vals[k];
+  await camWL(k==='club'?'club':'num');
+  const{data}=await CAM.worker.recognize(p.canvas);
+  const val=camParse(k,data.text);CAM.hash[k]=p.bits;CAM.vals[k]=val;return val;
+}
+function camGrab(){const v=camEl('cam-video');if(!v.videoWidth)return false;
+  if(!CAM.frame)CAM.frame=document.createElement('canvas');const f=CAM.frame;
+  if(f.width!==v.videoWidth||f.height!==v.videoHeight){f.width=v.videoWidth;f.height=v.videoHeight}
+  f.getContext('2d',{willReadFrequently:true}).drawImage(v,0,0);return true}
+
+/* --- shot detection --- */
+const camSig=r=>[r.total,r.carry,r.roll].join('|');
+const camValid=r=>r.total!=null&&r.carry!=null&&r.roll!=null&&r.carry>0&&r.total>0&&r.total<=420&&r.roll>=-40&&Math.abs(r.carry+r.roll-r.total)<=1.0;
+async function camStep(){
+  if(!camGrab())return;
+  const r={};for(const k of RG_KEY)r[k]=await camRead(k);
+  camLive();const now=Date.now();
+  if(r.shots!=null||r.total!=null)CAM.lastOk=now;
+  if(now-CAM.lastOk>10000)camStatus('讀不到數據，請確認手機沒有移動，或重新校正','bad');
+  if(!CAM.started){if(r.shots!=null||r.total!=null){CAM.started=true;CAM.base=r.shots;CAM.lastTotal=r.total;CAM.lastRec=camValid(r)?camSig(r):null;camStatus('等待擊球…','ok')}else camStatus('尋找數據欄…');return}
+  if(CAM.state==='idle'){
+    // a new shot: the 擊球數 counter changed, or the distance changed (fallback when the counter can't be read)
+    const byCount=r.shots!=null&&CAM.base!=null&&r.shots!==CAM.base;
+    const byValue=r.total!=null&&CAM.lastTotal!=null&&Math.abs(r.total-CAM.lastTotal)>0.05;
+    const key=byCount?'c'+r.shots:byValue?'v':null;
+    if(key){if(CAM.pend===key)CAM.pendN++;else{CAM.pend=key;CAM.pendN=1}
+      if(CAM.pendN>=2){CAM.state='track';CAM.track={shots:byCount?r.shots:null,byCount,since:now,sig:null,sigSince:now};
+        camStatus(`${byCount?'第 '+r.shots+' 球・':''}等待數字停止…`,'busy')}}
+    else{CAM.pend=null;CAM.pendN=0;if(CAM.base==null&&r.shots!=null)CAM.base=r.shots;if(CAM.lastTotal==null&&r.total!=null)CAM.lastTotal=r.total}
+    return;
+  }
+  const t=CAM.track;
+  if(r.shots!=null&&r.shots!==CAM.base&&r.shots!==t.shots){t.shots=r.shots;t.byCount=true}
+  const sig=r.total!=null&&r.carry!=null&&r.roll!=null?camSig(r):null;
+  if(sig!==t.sig){t.sig=sig;t.sigSince=now}
+  if(sig&&now-t.sigSince>=1500&&camValid(r)){
+    // same numbers as the shot already recorded: only accept when the counter confirms a new shot and enough time has passed
+    if(sig===CAM.lastRec&&!(t.byCount&&r.shots===t.shots&&now-t.since>=8000)){if(!t.byCount&&now-t.since>6000)camIdle(r);return}
+    await camRecord(r,t.shots!=null?t.shots:r.shots);return;
+  }
+  if(now-t.since>25000){camIdle(r);camWarn(`有一球讀不到完整數字，沒有記錄。可以在記錄頁手動補記。`);beep(220)}
+}
+function camIdle(r){const t=CAM.track||{};CAM.state='idle';CAM.base=t.shots!=null?t.shots:r.shots!=null?r.shots:CAM.base;CAM.lastTotal=r.total!=null?r.total:CAM.lastTotal;CAM.pend=null;CAM.pendN=0;camStatus('等待擊球…','ok')}
+function rgClubCheck(code,club){
+  if(!code)return null;const L=code[0],n=code.slice(1);let want=null,ok=true,label=code;
+  if(L==='W'&&n){want=n+'W';ok=club===want}
+  else if(L==='I'&&n){want=n+'i';ok=club===want}
+  else if(L==='P'){want='PW';ok=club==='PW'}
+  else if(L==='U'){ok=/H$/i.test(club);label='U（混合桿）'}
+  else if(L==='S'){ok=/°$/.test(club);label='S（挖起桿）'}
+  return ok?null:{code:label,want:want&&S.clubs.includes(want)?want:null};
+}
+async function camRecord(r,shotNo){
+  const m={};for(const k of RG_EXTRA){const v=await camRead(k,true);if(v!=null)m[k]=v}
+  let code=null;try{code=await camRead('club',true)}catch(e){}
+  const now=Date.now(),id=now.toString(36)+Math.random().toString(36).slice(2,6);
+  const shot={id,t:now,club:S.sel.club,swing:S.sel.swing,face:S.sel.face,open:S.sel.face==='open',carry:r.carry,roll:r.roll,src:'cam',m};
+  if(code)shot.rg=code;
+  D.shots[id]=shot;rebuild();changed();
+  CAM.recent.unshift(id);CAM.recent=CAM.recent.slice(0,20);
+  CAM.lastRec=camSig(r);CAM.lastTotal=r.total;if(shotNo!=null)CAM.base=shotNo;CAM.state='idle';CAM.pend=null;CAM.pendN=0;
+  CAM.mismatch=rgClubCheck(code,shot.club);if(CAM.mismatch)CAM.mismatch.id=id;
+  beep(880);camStatus(`已記錄${shotNo!=null?'第 '+shotNo+' 球':''}・等待擊球…`,'ok');camWarn('');
+  render();camPanel();
+}
+function beep(f){try{const a=CAM.audio||(CAM.audio=new (window.AudioContext||window.webkitAudioContext)());const o=a.createOscillator(),g=a.createGain();
+  o.frequency.value=f;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(.15,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.25);o.start();o.stop(a.currentTime+.25)}catch(e){}}
+
+async function camLoop(){
+  clearTimeout(CAM.timer);if(!CAM.open)return;
+  if(CAM.running&&!CAM.busy&&CAM.worker){CAM.busy=true;try{await camStep()}catch(e){console.error(e)}CAM.busy=false}
+  CAM.timer=setTimeout(camLoop,300);
+}
+
+/* --- overlay drawing & calibration handles --- */
+function camVideoBox(){const v=camEl('cam-video'),st=camEl('cam-stage');const W=st.clientWidth,H=st.clientHeight,vw=v.videoWidth||16,vh=v.videoHeight||9;
+  const s=Math.min(W/vw,H/vh);return{x:(W-vw*s)/2,y:(H-vh*s)/2,w:vw*s,h:vh*s,W,H}}
+function camDraw(){
+  if(!CAM.open)return;CAM.raf=requestAnimationFrame(camDraw);
+  const cv=camEl('cam-ov'),b=camVideoBox(),dpr=window.devicePixelRatio||1;
+  if(cv.width!==Math.round(b.W*dpr)||cv.height!==Math.round(b.H*dpr)){cv.width=Math.round(b.W*dpr);cv.height=Math.round(b.H*dpr)}
+  const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,b.W,b.H);
+  const P=p=>[b.x+p[0]*b.w,b.y+p[1]*b.h];
+  g.lineWidth=2;g.strokeStyle=CAM.calib?'#F0C23A':'rgba(240,194,58,.7)';g.beginPath();CAM.quad.forEach((p,i)=>{const[x,y]=P(p);i?g.lineTo(x,y):g.moveTo(x,y)});g.closePath();g.stroke();
+  g.font='600 12px system-ui,sans-serif';
+  for(const k in RG_FIELDS){const[x0,y0,x1,y1]=camFieldRect(k),[a,c]=P([x0,y0]),[e,f]=P([x1,y1]);
+    const key=RG_KEY.includes(k);g.strokeStyle=key?'rgba(79,163,116,.95)':'rgba(255,255,255,.55)';g.lineWidth=key?2:1;g.strokeRect(a,c,e-a,f-c);
+    if(CAM.calib){const v=CAM.vals[k];const txt=(v==null?'?':v)+'';g.fillStyle='rgba(0,0,0,.65)';const tw=g.measureText(txt).width+8;g.fillRect(e-tw,f,tw,16);g.fillStyle=v==null?'#F2786D':'#fff';g.fillText(txt,e-tw+4,f+12)}}
+  if(CAM.calib){CAM.quad.forEach((p,i)=>{const[x,y]=P(p);g.fillStyle='#F0C23A';g.beginPath();g.arc(x,y,13,0,7);g.fill();g.fillStyle='#241A00';g.font='700 12px system-ui';g.fillText(['左上','右上','右下','左下'][i],x-12,y+4)})}
+}
+function camPointer(e){
+  if(!CAM.calib)return;const b=camVideoBox(),r=camEl('cam-ov').getBoundingClientRect();
+  const px=e.clientX-r.left,py=e.clientY-r.top;
+  if(e.type==='pointerdown'){let best=-1,bd=40;CAM.quad.forEach((p,i)=>{const d=Math.hypot(b.x+p[0]*b.w-px,b.y+p[1]*b.h-py);if(d<bd){bd=d;best=i}});
+    CAM.drag=best;if(best>=0){e.preventDefault();camEl('cam-ov').setPointerCapture(e.pointerId)}return}
+  if(CAM.drag<0)return;e.preventDefault();
+  if(e.type==='pointermove'){CAM.quad[CAM.drag]=[Math.min(1,Math.max(0,(px-b.x)/b.w)),Math.min(1,Math.max(0,(py-b.y)/b.h))];CAM.hash={}}
+  else{CAM.drag=-1;camSaveQuad()}
+}
+
+/* --- panel (clubs, swing, recent shots) --- */
+const r1=v=>(Math.round(toDisp(v)*10)/10).toFixed(1);
+function camLive(){const el=camEl('cam-live');if(!el)return;const v=CAM.vals,f=x=>x==null?'—':x;
+  el.textContent=CAM.running?`畫面讀到：總距離 ${f(v.total)}・落點 ${f(v.carry)}・滾動 ${f(v.roll)}・擊球數 ${f(v.shots)}`:''}
+function camPanel(){
+  if(!CAM.open)return;
+  camEl('cam-clubs').innerHTML=S.clubs.map(c=>`<button class="chip" data-camclub="${esc(c)}" aria-pressed="${c===S.sel.club}">${esc(c)}</button>`).join('');
+  const sw=camEl('cam-swing');sw.innerHTML=swingsFor(S.sel.club).map(x=>`<option value="${x.k}" ${x.k===S.sel.swing?'selected':''}>${x.n}</option>`).join('');
+  const fc=camEl('cam-face');fc.hidden=!isWedge(S.sel.club);fc.innerHTML=facesFor(S.sel.club).map(f=>`<option value="${f}" ${f===S.sel.face?'selected':''}>${FACES[f]}</option>`).join('');
+  const shots=CAM.recent.map(id=>D.shots[id]).filter(Boolean).slice(0,5);
+  camEl('cam-recent').innerHTML=shots.length?shots.map(s=>`<li><span class="cr-c">${esc(s.club)}</span><span class="cr-s">${swName(s.swing)}${faceTag(faceOf(s))}</span>
+    <span class="cr-n">${r1(s.carry)} <small>+${r1(s.roll)}</small> = <b>${r1(s.carry+s.roll)}</b></span></li>`).join('')
+    :`<li class="cr-empty">${CAM.running?'打完一球、數字停住後會自動記錄在這裡。':'選好球桿後按「開始自動記錄」。'}</li>`;
+  camEl('cam-undo').disabled=!shots.length;
+  const run=camEl('cam-run');run.textContent=CAM.running?'暫停':'開始自動記錄';run.className='btn'+(CAM.running?' ghost':'');run.disabled=CAM.calib;
+  camEl('cam-calib').textContent=CAM.calib?'完成校正':'校正';
+  camEl('cam-calibbar').hidden=!CAM.calib;
+  const mm=CAM.mismatch;
+  if(mm&&D.shots[mm.id])camWarn(`畫面球桿是 <b>${esc(mm.code)}</b>，App 選的是 <b>${esc(D.shots[mm.id].club)}</b>。
+    ${mm.want?`<button class="btn" data-camfix="${esc(mm.want)}">上一球改成 ${esc(mm.want)}</button>`:'請在上方選好正確球桿，再按'}
+    ${mm.want?'':`<button class="btn" data-camfix="">套用到上一球</button>`}<button class="btn ghost" data-camfix="-">忽略</button>`);
+}
+async function camStart(){
+  try{CAM.audio=CAM.audio||new (window.AudioContext||window.webkitAudioContext)();CAM.audio.resume()}catch(e){}
+  try{if(navigator.wakeLock&&!CAM.wake)CAM.wake=await navigator.wakeLock.request('screen')}catch(e){}
+  CAM.running=true;CAM.started=false;CAM.base=null;CAM.lastTotal=null;CAM.lastRec=null;CAM.state='idle';CAM.pend=null;CAM.pendN=0;CAM.lastOk=Date.now();CAM.hash={};camPanel();
+  try{await camWorker();camStatus('尋找擊球數…')}catch(e){CAM.running=false;camStatus('辨識引擎載入失敗，請確認網路後再試一次','bad');camPanel()}
+}
+async function camStream(){
+  const v=camEl('cam-video');
+  CAM.stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}});
+  v.srcObject=CAM.stream;await v.play().catch(()=>{});
+}
+async function camOpen(){
+  CAM.open=true;CAM.quad=camLoadQuad();CAM.calib=!localStorage.getItem(LS_QUAD);CAM.vals={};CAM.hash={};CAM.mismatch=null;
+  camEl('cam').hidden=false;document.body.classList.add('cam-on');camPanel();camWarn('');
+  camStatus(CAM.calib?'第一次使用：請先校正位置':'按「開始自動記錄」');
+  try{await camStream()}catch(e){camStatus('無法開啟相機。請在瀏覽器設定允許此網站使用相機。','bad');return}
+  camDraw();camLoop();camWorker().then(()=>{if(!CAM.running)camStatus(CAM.calib?'拖曳四個圓點對準數據欄，再按「測試讀取」':'按「開始自動記錄」')}).catch(()=>camStatus('辨識引擎載入失敗，請確認網路','bad'));
+}
+function camClose(){
+  CAM.open=false;CAM.running=false;CAM.calib=false;clearTimeout(CAM.timer);cancelAnimationFrame(CAM.raf);
+  if(CAM.stream)CAM.stream.getTracks().forEach(t=>t.stop());CAM.stream=null;
+  try{CAM.wake&&CAM.wake.release()}catch(e){}CAM.wake=null;
+  camEl('cam').hidden=true;document.body.classList.remove('cam-on');render();
+}
+async function camTest(){
+  if(!CAM.worker){toast('辨識引擎還在載入');return}
+  if(CAM.busy){setTimeout(camTest,200);return}
+  CAM.busy=true;camStatus('讀取中…');
+  try{if(camGrab())for(const k in RG_FIELDS)await camRead(k,true);
+    const miss=RG_KEY.filter(k=>CAM.vals[k]==null).map(k=>RG_LABEL[k]);
+    const r={total:CAM.vals.total,carry:CAM.vals.carry,roll:CAM.vals.roll};
+    camStatus(miss.length?`讀不到：${miss.join('、')}，請調整圓點位置`:camValid(r)?'讀取正確，可以按「完成校正」':'數字對不上（落點＋滾動≠總距離），請微調位置',miss.length||!camValid(r)?'bad':'ok');
+  }catch(e){camStatus('讀取失敗','bad')}
+  CAM.busy=false;
+}
+document.addEventListener('visibilitychange',()=>{if(CAM.open&&document.visibilityState==='visible'){const v=camEl('cam-video');
+  if(!CAM.stream||CAM.stream.getVideoTracks().every(t=>t.readyState==='ended'))camStream().catch(()=>{});else v.play().catch(()=>{})}});
+function camInit(){
+  const ov=camEl('cam-ov');['pointerdown','pointermove','pointerup','pointercancel'].forEach(t=>ov.addEventListener(t,camPointer));
+  camEl('cam').addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+    if(b.id==='cam-close'){camClose();return}
+    if(b.id==='cam-calib'){CAM.calib=!CAM.calib;if(CAM.calib)CAM.running=false;else{camSaveQuad();camStatus('按「開始自動記錄」')}camPanel();return}
+    if(b.id==='cam-test'){camTest();return}
+    if(b.id==='cam-reset'){CAM.quad=camQuadDefault();CAM.hash={};return}
+    if(b.id==='cam-run'){if(CAM.running){CAM.running=false;camStatus('已暫停');camPanel()}else camStart();return}
+    if(b.id==='cam-undo'){const id=CAM.recent.shift();if(id&&D.shots[id]){deleteShot(id);toast('已撤銷上一球')}if(CAM.mismatch&&CAM.mismatch.id===id)CAM.mismatch=null,camWarn('');camPanel();return}
+    if(d.camclub!==undefined){S.sel.club=d.camclub;fixSel();render();camPanel();return}
+    if(d.camfix!==undefined){const mm=CAM.mismatch;CAM.mismatch=null;camWarn('');
+      if(mm&&d.camfix!=='-'&&D.shots[mm.id]){if(d.camfix){S.sel.club=d.camfix;fixSel()}
+        D.shots[mm.id]=Object.assign({},D.shots[mm.id],{club:S.sel.club,swing:S.sel.swing,face:S.sel.face,open:S.sel.face==='open',u:Date.now()});rebuild();changed();toast(`上一球已改成 ${S.sel.club}`)}
+      render();camPanel();return}
+  });
+  camEl('cam-swing').addEventListener('change',e=>{S.sel.swing=e.target.value;render()});
+  camEl('cam-face').addEventListener('change',e=>{S.sel.face=e.target.value;render()});
 }
 
 /* ---------- render & events ---------- */
@@ -740,6 +1067,7 @@ document.addEventListener('click',e=>{
   if(d.nedit){S.notes.edit=d.nedit;S.armed=null;render();const t=document.getElementById('nedit-in');if(t)t.focus();return}
   if(d.ncancel){S.notes.edit=null;S.armed=null;render();return}
   if(d.ndel){if(S.armed==='n'+d.ndel){setNotes(d.nclubdel,notesFor(d.nclubdel).filter(x=>x.id!==d.ndel));S.notes.edit=null;S.armed=null;toast('已刪除');render()}else{S.armed='n'+d.ndel;render()}return}
+  if(b.id==='open-cam'){camOpen();return}
   if(b.id==='open-all'){S.all.open=true;S.all.edit=null;S.armed=null;render();return}
   if(d.allf){S.all.filter=d.allf;S.all.edit=null;S.armed=null;render();const sc=document.querySelector('#sheet .sheet');if(sc)sc.scrollTop=0;return}
   if(d.edit){S.all.edit=d.edit;S.armed=null;render();return}
@@ -762,14 +1090,15 @@ document.addEventListener('click',e=>{
   if(d.down!==undefined){const i=+d.down,a=S.clubs.slice();[a[i+1],a[i]]=[a[i],a[i+1]];S.clubs=a;persistSettings();render();return}
   if(d.rm!==undefined){S.clubs=S.clubs.filter((_,i)=>i!==+d.rm);fixSel();persistSettings();render();return}
   if(b.id==='export'){
-    const rows=[['日期時間','球桿','揮桿','桿面','carry('+U()+')','滾動('+U()+')','總距離('+U()+')']]
-      .concat(allShots().reverse().map(s=>{const t=new Date(s.t);return[`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())} ${pad(t.getHours())}:${pad(t.getMinutes())}`,s.club,swName(s.swing),FACES[faceOf(s)],r0(s.carry),r0(s.roll),r0(s.carry+s.roll)]}));
+    const rows=[['日期時間','球桿','揮桿','桿面','carry('+U()+')','滾動('+U()+')','總距離('+U()+')','桿頭速度(mph)','球速(mph)','擊球效率','起飛角度','倒旋(rpm)','側旋(rpm)','來源']]
+      .concat(allShots().reverse().map(s=>{const t=new Date(s.t);return[`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())} ${pad(t.getHours())}:${pad(t.getMinutes())}`,s.club,swName(s.swing),FACES[faceOf(s)],r0(s.carry),r0(s.roll),r0(s.carry+s.roll)].concat(['cs','bs','sf','la','bsp','ssp'].map(k=>s.m&&s.m[k]!=null?s.m[k]:''),[s.src==='cam'?'鏡頭':'手動'])}));
     const csv=rows.map(r=>r.map(x=>/[",\n]/.test(String(x))?`"${String(x).replace(/"/g,'""')}"`:x).join(',')).join('\n');
     const ta=document.getElementById('csv');ta.value=csv;
     const fallback=()=>{ta.hidden=false;ta.focus();ta.select();toast('請長按選取文字後複製')};
     try{navigator.clipboard.writeText(csv).then(()=>toast(`已複製 ${rows.length-1} 球紀錄`),fallback)}catch(err){fallback()}
   }
 });
+camInit();
 init();
 if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>

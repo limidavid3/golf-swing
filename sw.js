@@ -1,5 +1,5 @@
 // 練球碼數本 offline cache. Bump VERSION after changing any file so phones pick up the update.
-const VERSION = 'yardbook-2026-10-29d';
+const VERSION = 'yardbook-2026-10-31a';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
@@ -16,7 +16,9 @@ self.addEventListener('fetch', e => {
   if (url.hostname.endsWith('github.com') || url.hostname.endsWith('githubusercontent.com')) return;
   const sameOrigin = url.origin === self.location.origin;
   const fonts = url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
-  if (!sameOrigin && !fonts) return;
+  // Camera recognition engine (Tesseract.js, its core and English data) is served from jsDelivr; keep a copy for offline use.
+  const ocr = url.hostname === 'cdn.jsdelivr.net';
+  if (!sameOrigin && !fonts && !ocr) return;
   // Serve from cache right away, refresh the cache in the background.
   e.respondWith(caches.open(VERSION).then(async cache => {
     const cached = await cache.match(req, { ignoreSearch: sameOrigin });
