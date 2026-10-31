@@ -790,10 +790,10 @@ async function camWL(kind){if(CAM.wl===kind)return;CAM.wl=kind;
 
 /* --- image prep: crop field, scale, Otsu threshold → dark text on white --- */
 function camPrep(k){
-  const v=camEl('cam-video'),W=v.videoWidth,H=v.videoHeight;if(!W)return null;
+  const F=CAM.frame;if(!F||!F.width)return null;const W=F.width,H=F.height;
   const[x0,y0,x1,y1]=camFieldRect(k);const sx=Math.max(0,x0*W),sy=Math.max(0,y0*H),sw=Math.min(W,x1*W)-sx,sh=Math.min(H,y1*H)-sy;
   if(sw<4||sh<4)return null;
-  const scale=Math.max(1,Math.min(4,64/sh)),dw=Math.round(sw*scale),dh=Math.round(sh*scale),pad=12;
+  const scale=Math.max(1,Math.min(5,80/sh)),dw=Math.round(sw*scale),dh=Math.round(sh*scale),pad=12;
   const c=document.createElement('canvas');c.width=dw+pad*2;c.height=dh+pad*2;const g=c.getContext('2d',{willReadFrequently:true});
   g.imageSmoothingEnabled=true;g.drawImage(CAM.frame,sx,sy,sw,sh,pad,pad,dw,dh);
   const img=g.getImageData(pad,pad,dw,dh),d=img.data,n=dw*dh,gray=new Uint8Array(n),hist=new Array(256).fill(0);
@@ -802,16 +802,20 @@ function camPrep(k){
   for(let t=0;t<256;t++){wB+=hist[t];if(!wB)continue;const wF=n-wB;if(!wF)break;sB+=t*hist[t];const mB=sB/wB,mF=(sum-sB)/wF,b=wB*wF*(mB-mF)*(mB-mF);if(b>best){best=b;th=t}}
   let bright=0;for(let i=0;i<n;i++)if(gray[i]>th)bright++;
   const textBright=bright<n/2;
+  // Glowing text on a projector looks bolder than it is: move the cut toward the text's core so strokes stay thin,
+  // holes in 0/6/8/9 stay open and unit labels don't touch the last digit.
+  {let c=0,pk=th;if(textBright){for(let t=255;t>th;t--){c+=hist[t];if(c>=bright*.5){pk=t;break}}}else{for(let t=0;t<th;t++){c+=hist[t];if(c>=(n-bright)*.5){pk=t;break}}}
+   th=Math.round(th+(pk-th)*(CAM.thk!=null?CAM.thk:.7))}
   const out=g.createImageData(dw,dh),o=out.data;let bits='';
   const inkA=new Uint8Array(n);for(let i=0;i<n;i++)inkA[i]=(textBright?gray[i]>th:gray[i]<=th)?1:0;
-  if(k!=='club')camClean(inkA,dw,dh,k==='shots');
+  const glyphs=k!=='club'?camClean(inkA,dw,dh,k==='shots'):null;
   for(let i=0;i<n;i++){const val=inkA[i]?0:255;o[i*4]=o[i*4+1]=o[i*4+2]=val;o[i*4+3]=255}
   g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.putImageData(out,pad,pad);
   // coarse signature for change detection (24x6 grid of ink ratios)
   const GX=24,GY=6;for(let gy=0;gy<GY;gy++)for(let gx=0;gx<GX;gx++){let ink=0,cnt=0;
     for(let y=Math.floor(gy*dh/GY);y<Math.floor((gy+1)*dh/GY);y+=2)for(let x=Math.floor(gx*dw/GX);x<Math.floor((gx+1)*dw/GX);x+=2){cnt++;if(o[(y*dw+x)*4]===0)ink++}
     bits+=cnt&&ink/cnt>.25?'1':'0'}
-  return{canvas:c,bits};
+  return{canvas:c,bits,glyphs};
 }
 // Keep the digits: drop unit labels (yds, mph, rpm, deg) and stray marks by component size/position.
 function camClean(ink,w,h,lastGroup){
@@ -830,24 +834,48 @@ function camClean(ink,w,h,lastGroup){
     const minus=c.h<=.3*maxH&&c.w>=c.h*1.4&&c.x1<=L+.2*maxH&&c.x0>=L-1.2*maxH&&cy>T+.25*maxH&&cy<B-.25*maxH;
     if(dot||minus)keep.add(c.id)}
   for(let i=0;i<w*h;i++)if(ink[i]&&!keep.has(lab[i]))ink[i]=0;
+  return tall.map(c=>camHoles(lab,w,c));
+}
+// Holes inside one digit: 8 has two; 0 has one tall central hole; 9 one high, 6 one low.
+function camHoles(lab,w,c){
+  const bw=c.w+2,bh=c.h+2,bg=new Uint8Array(bw*bh),seen=new Uint8Array(bw*bh);
+  for(let y=0;y<bh;y++)for(let x=0;x<bw;x++){const gx=c.x0+x-1,gy=c.y0+y-1;const inside=x>0&&y>0&&x<bw-1&&y<bh-1;bg[y*bw+x]=inside&&lab[gy*w+gx]===c.id?0:1}
+  const flood=(start,cb)=>{const st=[start];seen[start]=1;while(st.length){const j=st.pop();cb(j);const x=j%bw,y=(j/bw)|0;
+    for(const q of[x>0?j-1:-1,x<bw-1?j+1:-1,y>0?j-bw:-1,y<bh-1?j+bw:-1])if(q>=0&&bg[q]&&!seen[q]){seen[q]=1;st.push(q)}}};
+  flood(0,()=>{});
+  const holes=[],minA=Math.max(3,c.w*c.h*.01);
+  for(let j=0;j<bw*bh;j++)if(bg[j]&&!seen[j]){let n=0,y0=bh,y1=0,sy=0;flood(j,q=>{const y=(q/bw)|0;n++;sy+=y;if(y<y0)y0=y;if(y>y1)y1=y});
+    if(n>=minA)holes.push({n,cy:(sy/n-1)/c.h,hh:(y1-y0+1)/c.h})}
+  holes.sort((a,b)=>b.n-a.n);
+  return{holes:holes.length,hy:holes[0]?holes[0].cy:null,hh:holes[0]?holes[0].hh:null};
 }
 function camSame(a,b){if(!a||!b||a.length!==b.length)return false;let d=0;for(let i=0;i<a.length;i++)if(a[i]!==b[i]&&++d>3)return false;return true}
-function camParse(k,txt){
-  const t=(txt||'').replace(/\s/g,'').replace(/\.+$/,'');let m;
-  if(k==='shots'){m=t.match(/\d{1,4}/);return m?+m[0]:null}
-  if(k==='sf'){m=t.match(/\d\.\d{2}/);return m?+m[0]:null}
-  if(k==='bsp'||k==='ssp'){m=t.match(/-?\d{1,5}/);return m?+m[0]:null}
-  if(k==='club'){const u=t.toUpperCase().replace(/^1(?=\d)/,'I');m=u.match(/^[WIUSP](\d{0,2})/);return m?m[0]:null}
-  m=t.match(/-?\d{1,3}\.\d/);if(m)return +m[0];
-  m=t.match(/^(-?)(\d{2,4})$/);if(m)return +(m[1]+m[2].slice(0,-1)+'.'+m[2].slice(-1));   // RG always shows one decimal: a lost dot
-  return null;
+// RG shows a fixed number of decimals per field, so the decimal point is not needed to read the value.
+const RG_FMT={total:[1,0,450],carry:[1,0,450],roll:[1,-60,150],cs:[1,10,170],bs:[1,10,230],la:[1,-15,75],sf:[2,.5,1.8],bsp:[0,0,15000],ssp:[0,-9000,9000],shots:[0,0,9999]};
+function camParse(k,txt,glyphs){
+  const t=(txt||'').replace(/\s/g,'');
+  if(k==='club'){const u=t.toUpperCase().replace(/^1(?=\d)/,'I');const m=u.match(/^[WIUSP]\d?/);return m?m[0]:null}
+  const neg=/^[^0-9]*-/.test(t);let ds=t.replace(/[^0-9]/g,'').split('');
+  if(!ds.length)return null;
+  if(glyphs){
+    if(glyphs.length===ds.length)ds=ds.map((d,i)=>{const g=glyphs[i];if(!'0689'.includes(d)||!g.holes)return d;
+      if(g.holes>=2)return'8';if(g.hh>.5)return'0';if(g.hy<.45)return'9';if(g.hy>.55)return'6';return d});
+  }
+  const[dec,lo,hi]=RG_FMT[k];if(dec&&ds.length<dec+1)return null;
+  let v=+ds.join('')/Math.pow(10,dec);if(neg)v=-v;v=+v.toFixed(dec);
+  return v>=lo&&v<=hi?v:null;
 }
 async function camRead(k,force){
   const p=camPrep(k);if(!p)return null;
   if(!force&&camSame(p.bits,CAM.hash[k])&&k in CAM.vals)return CAM.vals[k];
   await camWL(k==='club'?'club':'num');
   const{data}=await CAM.worker.recognize(p.canvas);
-  const val=camParse(k,data.text);CAM.hash[k]=p.bits;CAM.vals[k]=val;return val;
+  CAM.mm=CAM.mm||{};let val=camParse(k,data.text,p.glyphs);
+  if(val===undefined){ // digit count and shapes disagree: retry on the next frames, then fall back to the plain reading
+    CAM.mm[k]=(CAM.mm[k]||0)+1;if(CAM.mm[k]<3){CAM.hash[k]=null;CAM.vals[k]=null;return null}
+    val=camParse(k,data.text,null)}
+  CAM.mm[k]=0;
+  CAM.hash[k]=p.bits;CAM.vals[k]=val;return val;
 }
 function camGrab(){const v=camEl('cam-video');if(!v.videoWidth)return false;
   if(!CAM.frame)CAM.frame=document.createElement('canvas');const f=CAM.frame;
@@ -856,7 +884,16 @@ function camGrab(){const v=camEl('cam-video');if(!v.videoWidth)return false;
 
 /* --- shot detection --- */
 const camSig=r=>[r.total,r.carry,r.roll].join('|');
-const camValid=r=>r.total!=null&&r.carry!=null&&r.roll!=null&&r.carry>0&&r.total>0&&r.total<=420&&r.roll>=-40&&Math.abs(r.carry+r.roll-r.total)<=1.0;
+const camValid=r=>r.total!=null&&r.carry!=null&&r.roll!=null&&r.carry>0&&r.total>0&&r.total<=420&&r.roll>=-40&&Math.abs(r.carry+r.roll-r.total)<=0.6;
+// When 落點 + 滾動 ≠ 總距離, try fixing one commonly confused digit (0/9, 6/8, 3/8, 5/6, 1/7); accept only a unique fix.
+const CONF={'0':'98','9':'0','6':'85','8':'603','3':'8','5':'6','1':'7','7':'1'};
+function camRepair(r){
+  const sols=[];
+  for(const k of['total','carry','roll']){const str=Math.abs(r[k]).toFixed(1),neg=r[k]<0;
+    for(let i=0;i<str.length;i++){const alt=CONF[str[i]];if(!alt)continue;
+      for(const a of alt){const v=(neg?-1:1)*+(str.slice(0,i)+a+str.slice(i+1));const c=Object.assign({},r,{[k]:v});if(camValid(c))sols.push(c)}}}
+  return sols.length===1?sols[0]:null;
+}
 async function camStep(){
   if(!camGrab())return;
   const r={};for(const k of RG_KEY)r[k]=await camRead(k);
@@ -879,6 +916,11 @@ async function camStep(){
   if(r.shots!=null&&r.shots!==CAM.base&&r.shots!==t.shots){t.shots=r.shots;t.byCount=true}
   const sig=r.total!=null&&r.carry!=null&&r.roll!=null?camSig(r):null;
   if(sig!==t.sig){t.sig=sig;t.sigSince=now}
+  if(sig&&now-t.sigSince>=1500&&!camValid(r)){
+    // numbers have stopped but don't add up: read them again more carefully before giving up on this frame
+    if(!t.lastVote||now-t.lastVote>1200){t.lastVote=now;for(const k of['total','carry','roll'])r[k]=await camVote(k)}
+    if(!camValid(r)){const fx=camRepair(r);if(fx)Object.assign(r,fx)}
+  }
   if(sig&&now-t.sigSince>=1500&&camValid(r)){
     // same numbers as the shot already recorded: only accept when the counter confirms a new shot and enough time has passed
     if(sig===CAM.lastRec&&!(t.byCount&&r.shots===t.shots&&now-t.since>=8000)){if(!t.byCount&&now-t.since>6000)camIdle(r);return}
@@ -896,8 +938,18 @@ function rgClubCheck(code,club){
   else if(L==='S'){ok=/°$/.test(club);label='S（挖起桿）'}
   return ok?null:{code:label,want:want&&S.clubs.includes(want)?want:null};
 }
+// Read one field three times with different stroke thickness and keep the value at least two readings agree on.
+async function camVote(k){
+  const vs=[];for(const t of[.7,.55,.85]){CAM.thk=t;vs.push(await camRead(k,true))}CAM.thk=null;
+  for(const v of vs)if(v!=null&&vs.filter(x=>x===v).length>=2){CAM.vals[k]=v;return v}
+  CAM.vals[k]=vs[0];return vs[0];
+}
 async function camRecord(r,shotNo){
-  const m={};for(const k of RG_EXTRA){const v=await camRead(k,true);if(v!=null)m[k]=v}
+  const v={total:await camVote('total'),carry:await camVote('carry'),roll:await camVote('roll')};
+  if(!camValid(v)){const fx=camRepair(v);if(fx)Object.assign(v,fx)}
+  if(!camValid(v)){CAM.track.sig=null;return}            // readings disagree: keep watching instead of recording a wrong number
+  r=Object.assign({},r,v);
+  const m={};for(const k of RG_EXTRA){const x=await camVote(k);if(x!=null)m[k]=x}
   let code=null;try{code=await camRead('club',true)}catch(e){}
   const now=Date.now(),id=now.toString(36)+Math.random().toString(36).slice(2,6);
   const shot={id,t:now,club:S.sel.club,swing:S.sel.swing,face:S.sel.face,open:S.sel.face==='open',carry:r.carry,roll:r.roll,src:'cam',m};
