@@ -166,6 +166,8 @@ li.odd .n{opacity:.45;text-decoration:line-through}
 .fold[open]>summary{border-bottom:1px solid var(--line)}
 .fold-body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:10px}
 .fold-body .note{margin:0}
+.halfrow{display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--muted)}
+.halfrow .seg button{padding:9px 2px;font-size:13px}
 .pctlist{display:flex;flex-direction:column;gap:8px}
 .pctform{display:grid;grid-template-columns:56px 1fr auto;gap:8px;align-items:center}
 .pctform.def{padding-top:8px;border-top:1px dashed var(--line)}
@@ -312,7 +314,7 @@ const LS_KEY='yardbook-v1';
 const YD_PER_M=1.0936;
 
 const S={clubs:DEFAULT_CLUBS.slice(),unit:'yd',pcts:DEFAULT_PCTS.slice(),sessions:{},view:'log',face:'square',
-  statMode:'mad',pctMap:{},openSec:{},sel:{club:'7i',swing:'full',face:'square'},pick:{carry:'',total:'',bias:(()=>{try{return localStorage.getItem('yardbook-gh-bias')||'long'}catch(e){return'long'}})()},notes:{open:false,club:'all',edit:null},all:{open:false,filter:'all',edit:null},mode:'loading',armed:null,detail:null};
+  statMode:'mad',recency:{on:true,by:'count',half:50,days:60},pctMap:{},openSec:{},sel:{club:'7i',swing:'full',face:'square'},pick:{carry:'',total:'',bias:(()=>{try{return localStorage.getItem('yardbook-gh-bias')||'long'}catch(e){return'long'}})()},notes:{open:false,club:'all',edit:null},all:{open:false,filter:'all',edit:null},mode:'loading',armed:null,detail:null};
 
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pad=n=>String(n).padStart(2,'0');
@@ -330,10 +332,10 @@ const sync={token:'',gistId:'',last:0,rev:0,busy:false,status:'off',timer:null};
 function loadCfg(){try{const v=JSON.parse(localStorage.getItem(LS_CFG)||'{}');sync.token=v.token||'';sync.gistId=v.gistId||'';sync.last=v.last||0}catch(e){}}
 function saveCfg(){try{localStorage.setItem(LS_CFG,JSON.stringify({token:sync.token,gistId:sync.gistId,last:sync.last}))}catch(e){}}
 function saveLocalData(){try{localStorage.setItem(LS_DATA,JSON.stringify(D))}catch(e){toast('手機儲存空間不足，請先匯出備份')}}
-function applySettings(st){if(!st)return;S.clubs=(st.clubs||DEFAULT_CLUBS).slice();S.unit=st.unit||'yd';S.pcts=(st.pcts||DEFAULT_PCTS).slice();S.pctMap=Object.assign({},st.pctMap||{});S.statMode=st.statMode||'mad';fixSel()}
+function applySettings(st){if(!st)return;S.clubs=(st.clubs||DEFAULT_CLUBS).slice();S.unit=st.unit||'yd';S.pcts=(st.pcts||DEFAULT_PCTS).slice();S.pctMap=Object.assign({},st.pctMap||{});S.statMode=st.statMode||'mad';S.recency=Object.assign({on:true,by:'count',half:50,days:60},st.recency||{});fixSel()}
 function rebuild(){const ss={};for(const id in D.shots){if(D.deleted[id])continue;const s=D.shots[id];const k=dayId(new Date(s.t));(ss[k]=ss[k]||{shots:[]}).shots.push(s)}S.sessions=ss}
 function changed(){saveLocalData();sync.rev++;scheduleSync(2000)}
-function persistSettings(){D.settings={clubs:S.clubs.slice(),unit:S.unit,pcts:S.pcts.slice(),pctMap:Object.assign({},S.pctMap),statMode:S.statMode,updated:Date.now()};changed()}
+function persistSettings(){D.settings={clubs:S.clubs.slice(),unit:S.unit,pcts:S.pcts.slice(),pctMap:Object.assign({},S.pctMap),statMode:S.statMode,recency:Object.assign({},S.recency),updated:Date.now()};changed()}
 function loadLocal(){
   try{const v=JSON.parse(localStorage.getItem(LS_DATA)||'null');if(v)D={shots:v.shots||{},deleted:v.deleted||{},settings:v.settings||null,notes:v.notes||{}}}catch(e){}
   if(D.settings)applySettings(D.settings);
@@ -422,20 +424,33 @@ function allShots(){const out=[];for(const id in S.sessions)for(const s of S.ses
 const median=a=>{if(!a.length)return null;const b=a.slice().sort((x,y)=>x-y),m=b.length>>1;return b.length%2?b[m]:(b[m-1]+b[m])/2};
 const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
 // MAD outlier screen on carry (see 設定 → 距離統計方式). Short misses are flagged sooner than long ones.
-function splitOutliers(shots){
-  if(S.statMode==='mean'||shots.length<6)return{used:shots,out:[]};
-  const cs=shots.map(s=>s.carry),med=median(cs);
-  const sig=Math.max(2,1.4826*median(cs.map(c=>Math.abs(c-med))));
-  const used=[],out=[];
-  for(const s of shots){const d=s.carry-med;(d<-2.5*sig||d>3*sig?out:used).push(s)}
-  return{used,out};
+// Recency weights within one club/swing/face group (see 設定 → 近期加權). Newest shot = 1, halves every half-life.
+function weightsFor(shots){
+  const Rc=S.recency;if(!Rc||!Rc.on||!shots.length)return shots.map(()=>1);
+  if(Rc.by==='time'){const newest=Math.max(...shots.map(s=>s.t));return shots.map(s=>Math.pow(.5,(newest-s.t)/(Rc.days*864e5)))}
+  const w=new Array(shots.length);shots.map((s,i)=>[s.t,i]).sort((a,b)=>b[0]-a[0]).forEach(([,i],rank)=>w[i]=Math.pow(.5,rank/Rc.half));return w;
+}
+function wMedian(vals,ws){const a=vals.map((v,i)=>[v,ws[i]]).sort((x,y)=>x[0]-y[0]),tot=a.reduce((s,x)=>s+x[1],0);let c=0;
+  for(let i=0;i<a.length;i++){c+=a[i][1];if(c>=tot/2-1e-9){if(Math.abs(c-tot/2)<1e-9&&i+1<a.length)return(a[i][0]+a[i+1][0])/2;return a[i][0]}}return a[a.length-1][0]}
+const wMean=(vals,ws)=>{let a=0,b=0;vals.forEach((v,i)=>{a+=v*ws[i];b+=ws[i]});return b?a/b:null};
+const effN=ws=>{let a=0,b=0;for(const w of ws){a+=w;b+=w*w}return b?a*a/b:0};
+function wSd(vals,ws){const m=wMean(vals,ws),ne=effN(ws);if(ne<=1.5)return null;let a=0,b=0;vals.forEach((v,i)=>{a+=ws[i]*(v-m)**2;b+=ws[i]});return Math.sqrt(a/b*ne/(ne-1))}
+// MAD outlier screen on carry (see 設定 → 距離統計方式), using recency-weighted median. Short misses are flagged sooner than long ones.
+function splitOutliers(shots,ws){
+  ws=ws||weightsFor(shots);
+  if(S.statMode==='mean'||shots.length<6)return{used:shots,uw:ws,out:[]};
+  const cs=shots.map(s=>s.carry),med=wMedian(cs,ws);
+  const sig=Math.max(2,1.4826*wMedian(cs.map(c=>Math.abs(c-med)),ws));
+  const used=[],uw=[],out=[];
+  shots.forEach((s,i)=>{const d=s.carry-med;if(d<-2.5*sig||d>3*sig)out.push(s);else{used.push(s);uw.push(ws[i])}});
+  return{used,uw,out};
 }
 function statsFor(shots){
-  const n=shots.length;if(!n)return{n:0,used:0,out:0,carry:null,total:null,min:null,max:null,sd:null};
-  const{used,out}=splitOutliers(shots),cs=used.map(s=>s.carry),ts=used.map(s=>s.carry+s.roll);
+  const n=shots.length;if(!n)return{n:0,used:0,out:0,neff:0,carry:null,total:null,min:null,max:null,sd:null};
+  const{used,uw,out}=splitOutliers(shots),cs=used.map(s=>s.carry),ts=used.map(s=>s.carry+s.roll);
   const useMed=S.statMode!=='mean'&&n>=3&&n<=5;
-  return{n,used:used.length,out:out.length,carry:useMed?median(cs):mean(cs),total:useMed?median(ts):mean(ts),
-    min:Math.min(...cs),max:Math.max(...cs),sd:used.length>=3?sdOf(cs):null};
+  return{n,used:used.length,out:out.length,neff:effN(uw),carry:useMed?wMedian(cs,uw):wMean(cs,uw),total:useMed?wMedian(ts,uw):wMean(ts,uw),
+    min:Math.min(...cs),max:Math.max(...cs),sd:used.length>=3?wSd(cs,uw):null};
 }
 let OUT=new Set();
 function computeOutliers(){const g={};for(const s of allShots()){const k=s.club+'|'+s.swing+'|'+faceOf(s);(g[k]=g[k]||[]).push(s)}
@@ -473,7 +488,7 @@ function recommend(C,T){
   const room=C!=null&&T!=null?T-C:null;                       // roll space between carry point and target
   const list=candidates().map(c=>{
     const metric=T!=null?c.total:c.carry, pass=C==null||c.low>=C;
-    let pen=(isWedge(c.club)?0:(SWING_PEN[c.swing]||0))+c.sd*0.3+(c.est?5:c.n<3?2:0)+(c.face!=='square'?3:0);
+    let pen=(isWedge(c.club)?0:(SWING_PEN[c.swing]||0))+(c.n>=3?c.sd:3)*0.3+(c.est?5:0)+(c.face!=='square'?3:0);
     const rollOver=room!=null&&c.roll-room>3;if(rollOver)pen+=(c.roll-room)*0.5;
     return Object.assign({},c,{pass,rollOver,metric,score:w(metric-(T!=null?T:C))+pen});
   });
@@ -560,6 +575,7 @@ function viewLog(){
   </section>
   <button class="allbtn" id="open-all"><span>全部紀錄</span><span class="allcount">${allShots().length} 球 ›</span></button>${statusLine()}`;
 }
+function recLabel(){const r=S.recency;return !r.on?'不加權':r.by==='time'?`近期加權（半衰期 ${r.days} 天）`:`近期加權（半衰期 ${r.half} 球）`}
 function viewTable(){
   const clubs=clubOrder(), face=S.face;
   const tbl=(list,cols,cap)=>list.length?`<div class="label">${cap}</div><div class="tablebox"><table style="min-width:${Math.max(420,70+cols.length*64)}px"><thead><tr><th></th>${cols.map(s=>`<th scope="col">${s.n}</th>`).join('')}</tr></thead><tbody>${list.map(c=>`<tr><th scope="row">${esc(c)}</th>${cols.map(s=>{
@@ -573,7 +589,7 @@ function viewTable(){
   <div class="seg three">${['square','open','closed'].map(f=>`<button data-face="${f}" aria-pressed="${face===f}">${f==='square'?'標準桿面':FACES[f]}</button>`).join('')}</div>
   <section>${rows}</section>
   <p class="note">${any?'點任一格看每一球的明細。':'還沒有任何紀錄。到「記錄」頁打幾球，這裡就會自動算出每支桿、每種揮法的平均距離。'}
-  目前統計方式：${S.statMode==='mean'?'全部平均':'排除異常球'}，可在「設定」切換。開桿面和關桿面只適用挖起桿與 PW。</p>${statusLine()}`;
+  目前統計方式：${S.statMode==='mean'?'全部平均':'排除異常球'}・${recLabel()}，可在「設定」切換。開桿面和關桿面只適用挖起桿與 PW。</p>${statusLine()}`;
 }
 function viewSet(){
   return `<header><div><h1>設定</h1><div class="sub">點選項目展開設定</div></div></header>
@@ -613,13 +629,23 @@ function viewSet(){
   <details class="card fold" data-sec="sec6" ${S.openSec.sec6?'open':''}><summary><span>距離統計方式</span><span class="sumv">${S.statMode==='mean'?'全部平均':'排除異常球'}</span><span class="chev" aria-hidden="true"></span></summary><div class="fold-body">
     <div class="seg two"><button data-stat="mad" aria-pressed="${S.statMode!=='mean'}">排除異常球（建議）</button><button data-stat="mean" aria-pressed="${S.statMode==='mean'}">全部平均</button></div>
     <ol class="logic">
-      <li><b>6 球以上：用 MAD 找出異常球。</b>先找這組 carry 的中位數，再算每球和中位數相差多少，取這些差距的中位數（MAD）。MAD 乘以 1.48 換算成標準差的大小，作為「正常落差」，最少 2 碼。</li>
+      <li><b>6 球以上：用 MAD 找出異常球。</b>先找這組 carry 的中位數（開啟近期加權時用加權中位數），再算每球和中位數相差多少，取這些差距的中位數（MAD）。MAD 乘以 1.48 換算成標準差的大小，作為「正常落差」，最少 2 碼。</li>
       <li><b>異常門檻：</b>比中位數短超過 2.5 倍正常落差、或長超過 3 倍，就視為異常，不計入平均。打短多半是打肥、打薄，所以打短的門檻較嚴。</li>
       <li><b>3～5 球：</b>球數太少，不排除任何球，改用中位數，避免單一球影響太大。<b>少於 3 球：</b>直接平均。</li>
       <li><b>只用 carry 判斷：</b>滾動受地面軟硬影響大，不拿來判斷。被排除的球，滾動與總距離也一起不計。</li>
       <li><b>不會刪除資料：</b>被排除的球在明細和全部紀錄中以灰色標示「異常」，你可以自行判斷，需要時再編輯或刪除。</li>
-      <li><b>全部平均：</b>所有球直接取平均，不排除任何球。</li>
+      <li><b>全部平均：</b>所有球直接取平均，不排除任何球；開啟近期加權時為加權平均。</li>
       <li>每支球桿、每種揮法、每種桿面各自分開計算。選桿頁的落差（±）也是用排除異常後的球計算。</li>
+    </ol></div></details>
+  <details class="card fold" data-sec="sec8" ${S.openSec.sec8?'open':''}><summary><span>近期加權</span><span class="sumv">${!S.recency.on?'關閉':S.recency.by==='time'?S.recency.days+' 天':S.recency.half+' 球'}</span><span class="chev" aria-hidden="true"></span></summary><div class="fold-body">
+    <div class="seg three"><button data-rec="off" aria-pressed="${!S.recency.on}">關閉</button><button data-rec="count" aria-pressed="${S.recency.on&&S.recency.by!=='time'}">依球數</button><button data-rec="time" aria-pressed="${S.recency.on&&S.recency.by==='time'}">依時間</button></div>
+    ${S.recency.on?`<div class="halfrow"><span>半衰期</span><div class="seg" style="grid-template-columns:repeat(5,1fr)">${(S.recency.by==='time'?[30,60,90,180,365]:[20,30,50,100,200]).map(v=>`<button data-half="${v}" aria-pressed="${(S.recency.by==='time'?S.recency.days:S.recency.half)===v}">${v}${S.recency.by==='time'?' 天':' 球'}</button>`).join('')}</div></div>`:''}
+    <ol class="logic">
+      <li><b>用途：</b>揮桿會隨練習改變，越近期打的球越能代表現在的距離。開啟後每一球都還會計入，但越舊的球權重越低。</li>
+      <li><b>依球數（預設）：</b>同一支球桿、同一種揮法和桿面，依打球先後排序。最新的一球權重 100%，每往前推一個半衰期，權重減半。以半衰期 50 球為例：最新 1～50 球權重 100%～50%，51～100 球 50%～25%，101～150 球 25%～12%，151～200 球 12%～6%。</li>
+      <li><b>依時間：</b>以這組最新一球的日期為準，每過一個半衰期（天數）權重減半。同一天打的球權重相同，不會因為當天打得多而讓較早的球吃虧。</li>
+      <li><b>平均與異常球：</b>平均距離改為加權平均。3～5 球時用加權中位數。排除異常球時，也用加權中位數判斷正常距離，讓最近的球決定標準；揮桿進步後，新的長球不會被當成異常。</li>
+      <li><b>適用範圍：</b>距離表、記錄頁的平均、選桿推薦都會套用。紀錄本身不會改變，關閉後立即恢復一般計算。</li>
     </ol></div></details>
   <details class="card fold" data-sec="sec7" ${S.openSec.sec7?'open':''}><summary><span>選桿邏輯（攻果嶺）</span><span class="chev" aria-hidden="true"></span></summary><div class="fold-body">
     <ol class="logic">
@@ -627,7 +653,7 @@ function viewSet(){
       <li><b>只填 carry：必須飛過。</b>用「穩定 carry 下限」判斷，也就是平均 carry 減掉你這個組合的落差。下限要大於等於目標才列為首選，否則標示「可能飛不過」。符合的組合中挑 carry 最接近目標的，避免拿太長的桿飛過果嶺。</li>
       <li><b>兩個都填：飛過障礙＋停在目標附近。</b>先要求穩定 carry 下限飛過障礙，再挑總距離最接近目標的。若平常的滾動比「目標總距離 − carry」多 3 碼以上，會往後排並標示「可能滾過頭」，開桿面或高拋的挖起桿因此較容易被推薦。</li>
       <li><b>揮法優先順序：</b>鐵桿和木桿以正常全揮最優先，3/4 揮、半揮依序往後，出力全揮放最後。挖起桿與 PW 的各種幅度不扣分。開桿面和關桿面平常稍微往後排；兩欄都填且滾動空間不夠時，滾得少的開桿面較容易排到前面。</li>
-      <li><b>穩定度與資料量：</b>落差越小越優先，落差依「距離統計方式」計算；不到 3 球時以 carry 的 5% 估算，最少 3 碼。少於 3 球的組合往後排；還沒有紀錄的球桿用一般距離估算，標示「預估」並排更後面。</li>
+      <li><b>穩定度與資料量：</b>3 球以上時，落差越小越優先，落差依「距離統計方式」與「近期加權」計算。<b>紀錄球數少不會往後排</b>：少於 3 球時排序視同落差 3 碼。不過判斷「能否飛過」時，仍以 carry 的 5%（最少 4 碼）估算落差，避免把不確定的球桿當成一定飛得過。還沒有任何紀錄的球桿用一般距離估算，標示「預估」並排在後面。</li>
       <li><b>結果顯示：</b>依分數排出前 5 名。右邊大字是平均總距離（只填 carry 時是平均 carry），下方是和目標差幾碼，3 碼以內以綠色標示。小標籤依序是：能否飛過與餘裕、平常滾動、落差（±）、紀錄球數。紅色標籤表示可能飛不過或滾過頭。</li>
     </ol></div></details>${statusLine()}`;
 }
@@ -1077,6 +1103,8 @@ document.addEventListener('click',e=>{
   if(b.id==='open-t'){S.sel.face=S.sel.face==='open'?'square':'open';render();return}
   if(d.sface){S.sel.face=d.sface;render();return}
   if(d.pctreset){const m=Object.assign({},S.pctMap);delete m[d.pctreset];S.pctMap=m;fixSel();persistSettings();render();toast(`${d.pctreset} 已改回預設`);return}
+  if(d.rec){S.recency=Object.assign({},S.recency,d.rec==='off'?{on:false}:{on:true,by:d.rec});persistSettings();render();return}
+  if(d.half){const v=+d.half;S.recency=Object.assign({},S.recency,S.recency.by==='time'?{days:v}:{half:v});persistSettings();render();return}
   if(d.stat){S.statMode=d.stat;persistSettings();render();return}
   if(b.id==='save'){doSave();return}
   if(b.id==='sync-now'){doSync();return}
