@@ -196,6 +196,13 @@ li.odd .n{opacity:.45;text-decoration:line-through}
 .camico{width:20px;height:15px;border:2px solid currentColor;border-radius:4px;position:relative}
 .camico::after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;border:2px solid currentColor;border-radius:50%;transform:translate(-50%,-50%)}
 .camtag{font-style:normal;font-size:11px;padding:0 6px;border-radius:4px;background:var(--green-soft);color:var(--green)}
+.mline{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding-bottom:4px;font-variant-numeric:tabular-nums}
+.mline span{display:flex;flex-direction:column;align-items:center;background:var(--green-soft);border-radius:6px;padding:3px 2px;line-height:1.2;min-width:0}
+.mline small{font-size:10.5px;color:var(--muted)}
+.mline b{font-family:var(--num);font-size:15px;font-weight:600;white-space:nowrap}
+.stats.four{grid-template-columns:repeat(4,1fr)}
+.stats.four b{font-size:20px}
+.stats b em{font-style:normal;font-size:11px;color:var(--muted);margin-left:2px}
 .xline{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;padding-bottom:2px}
 body.cam-on{overflow:hidden}
 .cam{position:fixed;inset:0;z-index:20;background:#000;color:#fff;display:flex;flex-direction:column;
@@ -549,7 +556,7 @@ function shotRow(s,withMeta){
   const odd=OUT.has(s.id);
   return `<li class="${odd?'odd':''}"><span class="d">${fmtDate(s.t)}${odd?' <em class="oddtag">異常</em>':''}${meta?'<br>'+meta:''}</span>
     <span class="n">${r0(s.carry)}<span> +${r0(s.roll)} = ${tot}</span></span>
-    <button class="del ${S.armed===s.id?'arm':''}" data-del="${s.id}">${S.armed===s.id?'確定刪除':'刪除'}</button></li>`;
+    <button class="del ${S.armed===s.id?'arm':''}" data-del="${s.id}">${S.armed===s.id?'確定刪除':'刪除'}</button>${metricsLine(s)}</li>`;
 }
 function viewLog(){
   const today=(S.sessions[dayId(new Date())]||{shots:[]}).shots.length;
@@ -663,7 +670,7 @@ function viewDetail(){
   const [club,swing]=S.detail, face=S.face, shots=match(club,swing,face), st=statsFor(shots);
   return `<div class="sheet-bg" data-close="1"><div class="sheet" role="dialog" aria-label="明細">
     <div class="sheet-head"><h2>${esc(club)}・${swName(swing)}${faceTag(face)}</h2><button class="x" data-close="1">關閉</button></div>
-    ${st.n?`<div class="stats"><div class="stat"><small>平均總距離</small><b>${r0(st.total)}</b></div><div class="stat"><small>平均 carry</small><b>${r0(st.carry)}</b></div><div class="stat"><small>carry 範圍</small><b>${r0(st.min)}–${r0(st.max)}</b></div></div>
+    ${st.n?`<div class="stats"><div class="stat"><small>平均總距離</small><b>${r0(st.total)}</b></div><div class="stat"><small>平均 carry</small><b>${r0(st.carry)}</b></div><div class="stat"><small>carry 範圍</small><b>${r0(st.min)}–${r0(st.max)}</b></div></div>${metricAvg(shots)}
     ${st.out?`<p class="note">有 ${st.out} 球判定為異常，未計入平均。</p>`:''}
     <ul class="shots card">${shots.map(s=>shotRow(s)).join('')}</ul>`:`<p class="empty">這一格還沒有紀錄。</p>`}
   </div></div>`;
@@ -701,6 +708,12 @@ function noteStrip(c){
   return `<button class="notestrip" data-notes="${esc(c)}"><span class="ns-k">${esc(c)} 注意</span><span class="ns-t">${items.length?esc(items[0].text):'尚未記錄，點這裡新增'}</span><span class="ns-n">${items.length>1?items.length+' 項 ':''}›</span></button>`;
 }
 function clubOrder(){const extra=[...new Set(allShots().map(s=>s.club))].filter(c=>!S.clubs.includes(c));return S.clubs.concat(extra)}
+const MET=[['la','起飛角度','°'],['cs','桿頭速度',' mph'],['bs','球速',' mph'],['sf','擊球效率','']];
+function metricAvg(shots){const{used}=splitOutliers(shots);const rows=MET.map(([k,l,u])=>{const v=used.map(x=>x.m&&x.m[k]).filter(x=>x!=null);
+    return v.length?`<div class="stat"><small>${l}</small><b>${(v.reduce((a,b)=>a+b,0)/v.length).toFixed(k==='sf'?2:1)}<em>${u.trim()}</em></b></div>`:''}).join('');
+  return rows?`<p class="note">平均擊球數據（只計鏡頭記錄的球，排除異常球）</p><div class="stats four">${rows}</div>`:''}
+function metricsLine(s){const m=s.m;if(!m||!MET.some(([k])=>m[k]!=null))return'';
+  return `<div class="mline">${MET.map(([k,l,u])=>`<span><small>${l}</small><b>${m[k]!=null?(+m[k]).toFixed(k==='sf'?2:1)+u:'—'}</b></span>`).join('')}</div>`}
 function extrasLine(s){const m=s.m;if(!m)return'';const f=(k,u)=>m[k]!=null?`<span>${RG_LABEL[k]} ${m[k]}${u}</span>`:'';
   return `<div class="xline">${f('cs',' mph')}${f('bs',' mph')}${f('sf','')}${f('la','°')}${f('bsp',' rpm')}${f('ssp',' rpm')}</div>`}
 function editRow(s){
@@ -728,7 +741,7 @@ function viewAll(){
     return `<section class="grp"><div class="grp-h"><span class="grp-club">${esc(c)}</span><span class="grp-n">${list.length} 球${st.n?`・正常全揮平均總距離 ${r0(st.total)}`:''}</span></div>
     <ul class="shots allshots">${list.map(s=>S.all.edit===s.id?editRow(s):`<li class="${OUT.has(s.id)?'odd':''}"><span class="d">${fmtDate(s.t)}${OUT.has(s.id)?' <em class="oddtag">異常</em>':''}<br>${swName(s.swing)}${faceTag(faceOf(s))}${s.src==='cam'?' <em class="camtag">鏡頭</em>':''}</span>
       <span class="n">${r0(s.carry)}<span> +${r0(s.roll)} = ${r0(s.carry+s.roll)}</span></span>
-      <button class="del" data-edit="${s.id}">編輯</button>${extrasLine(s)}</li>`).join('')}</ul></section>`}).join('');
+      <button class="del" data-edit="${s.id}">編輯</button>${metricsLine(s)}</li>`).join('')}</ul></section>`}).join('');
   return `<div class="sheet-bg" data-close="1"><div class="sheet full" role="dialog" aria-label="全部紀錄">
     <div class="sheet-head"><h2>全部紀錄・${shots.length} 球</h2><button class="x" data-close="1">關閉</button></div>
     ${shots.length?`<div class="filters"><button class="fchip" data-allf="all" aria-pressed="${f==='all'}">全部</button>${clubs.map(c=>`<button class="fchip" data-allf="${esc(c)}" aria-pressed="${f===c}">${esc(c)} <small>${byClub[c].length}</small></button>`).join('')}</div>${groups}`

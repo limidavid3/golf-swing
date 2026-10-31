@@ -1,5 +1,5 @@
 // 練球碼數本 offline cache. Bump VERSION after changing any file so phones pick up the update.
-const VERSION = 'yardbook-2026-10-31b';
+const VERSION = 'yardbook-2026-10-31c';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
