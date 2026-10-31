@@ -233,6 +233,7 @@ body.cam-on{overflow:hidden}
 .cr-n b{font-family:var(--num);font-size:19px}
 .cr-empty{color:#93A198;font-size:13px}
 .cam-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cam-btns.three{grid-template-columns:1fr 1fr 1fr}
 .cam-btns .btn{padding:11px;font-size:15px}
 .cam .btn{background:#4FA374;border-color:#4FA374;color:#0B130E}
 .cam .btn.ghost{background:transparent;color:#E4ECE6;border-color:#29372E}
@@ -284,8 +285,8 @@ textarea{width:100%;min-height:120px;font:12px/1.4 ui-monospace,Menlo,monospace;
   <div class="cam-top"><button id="cam-close" class="x" type="button">關閉</button><div id="cam-status" class="cam-status"></div><button id="cam-calib" class="x" type="button">校正</button></div>
   <div class="cam-stage" id="cam-stage"><video id="cam-video" playsinline muted autoplay></video><canvas id="cam-ov"></canvas></div>
   <div class="cam-bar">
-    <div id="cam-calibbar" class="cam-calibbar" hidden><p>把四個黃色圓點拖到 RG 數據欄的四個角：上緣對齊有名字的那一列頂端，下緣對齊「倒旋／側旋」那一列底部。綠框要框住數字。</p>
-      <div class="cam-btns"><button id="cam-test" class="btn" type="button">測試讀取</button><button id="cam-reset" class="btn ghost" type="button">重設位置</button></div></div>
+    <div id="cam-calibbar" class="cam-calibbar" hidden><p>先在 RG 畫面顯示一球的結果時按「自動尋找」，找到後再拖曳圓點微調。四個黃色圓點對應 RG 數據欄的四個角：上緣對齊有名字的那一列頂端，下緣對齊「倒旋／側旋」那一列底部。綠框要框住數字。</p>
+      <div class="cam-btns three"><button id="cam-auto" class="btn" type="button">自動尋找</button><button id="cam-test" class="btn ghost" type="button">測試讀取</button><button id="cam-reset" class="btn ghost" type="button">重設位置</button></div></div>
     <div class="cam-clubs" id="cam-clubs"></div>
     <div class="cam-row"><select id="cam-swing" aria-label="揮法"></select><select id="cam-face" aria-label="桿面"></select></div>
     <div id="cam-live" class="cam-live"></div>
@@ -785,7 +786,7 @@ async function camWorker(){
   return CAM.worker;
 }
 async function camWL(kind){if(CAM.wl===kind)return;CAM.wl=kind;
-  await CAM.worker.setParameters({tessedit_pageseg_mode:'7',tessedit_char_whitelist:kind==='club'?'WIUSP0123456789':'0123456789.-'})}
+  await CAM.worker.setParameters({tessedit_pageseg_mode:kind==='auto'?'11':'7',tessedit_char_whitelist:kind==='club'?'WIUSP0123456789':kind==='auto'?'':'0123456789.-'})}
 
 /* --- image prep: crop field, scale, Otsu threshold → dark text on white --- */
 function camPrep(k){
@@ -933,13 +934,75 @@ function camDraw(){
     if(CAM.calib){const v=CAM.vals[k];const txt=(v==null?'?':v)+'';g.fillStyle='rgba(0,0,0,.65)';const tw=g.measureText(txt).width+8;g.fillRect(e-tw,f,tw,16);g.fillStyle=v==null?'#F2786D':'#fff';g.fillText(txt,e-tw+4,f+12)}}
   if(CAM.calib){CAM.quad.forEach((p,i)=>{const[x,y]=P(p);g.fillStyle='#F0C23A';g.beginPath();g.arc(x,y,13,0,7);g.fill();g.fillStyle='#241A00';g.font='700 12px system-ui';g.fillText(['左上','右上','右下','左下'][i],x-12,y+4)})}
 }
+/* --- automatic panel search: find 總距離 / 落點 / 滾動 by their numbers (落點 + 滾動 ≈ 總距離), then fit the panel --- */
+const RG_CENTER=Object.fromEntries(Object.entries(RG_FIELDS).map(([k,[a,b,c,d]])=>[k,[(a+c)/2,(b+d)/2]]));
+function fitAffine(pairs){ // least squares: [u v 1]·M = [x y]
+  const A=[[0,0,0],[0,0,0],[0,0,0]],bx=[0,0,0],by=[0,0,0];
+  for(const[[u,v],[x,y]]of pairs){const r=[u,v,1];for(let i=0;i<3;i++){for(let j=0;j<3;j++)A[i][j]+=r[i]*r[j];bx[i]+=r[i]*x;by[i]+=r[i]*y}}
+  const solve=b=>{const m=A.map((r,i)=>r.concat(b[i]));for(let c=0;c<3;c++){let p=c;for(let r=c+1;r<3;r++)if(Math.abs(m[r][c])>Math.abs(m[p][c]))p=r;[m[c],m[p]]=[m[p],m[c]];
+      if(Math.abs(m[c][c])<1e-9)return null;for(let r=0;r<3;r++)if(r!==c){const f=m[r][c]/m[c][c];for(let k=c;k<4;k++)m[r][k]-=f*m[c][k]}}return m.map((r,i)=>r[3]/r[i])};
+  const cx=solve(bx),cy=solve(by);if(!cx||!cy)return null;return(u,v)=>[cx[0]*u+cx[1]*v+cx[2],cy[0]*u+cy[1]*v+cy[2]];
+}
+async function camFindWords(T){
+  const f=CAM.frame,W=800,s=W/f.width,H=Math.round(f.height*s);
+  const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(f,0,0,W,H);
+  const img=g.getImageData(0,0,W,H),d=img.data;
+  for(let i=0;i<d.length;i+=4){const r=d[i],gg=d[i+1],b=d[i+2],lum=(r*299+gg*587+b*114)/1000,sat=Math.max(r,gg,b)-Math.min(r,gg,b);const v=lum>T&&sat<100?0:255;d[i]=d[i+1]=d[i+2]=v}
+  g.putImageData(img,0,0);
+  await camWL('auto');
+  const{data}=await CAM.worker.recognize(c);
+  const list=[];(data.blocks||[]).forEach(b=>(b.paragraphs||[]).forEach(p=>(p.lines||[]).forEach(l=>(l.words||[]).forEach(w=>list.push(w)))));
+  const out=[];
+  for(const w of list){const t=w.text||'',m=t.match(/-?\d{1,4}(\.\d{1,2})?/);if(!m)continue;const{x0,y0,x1,y1}=w.bbox;
+    const a0=m.index,a1=a0+m[0].length,n=Math.max(1,t.length);
+    out.push({v:+m[0],dec:m[0].includes('.'),cx:(x0+(x1-x0)*((a0+a1)/2/n))/W,cy:((y0+y1)/2)/H,h:(y1-y0)/H})}
+  return{words:out,aspect:H/W};
+}
+function camTriple(ws,aspect){
+  const d=ws.filter(w=>w.dec);let best=null;
+  for(const T of d)for(const A of d)for(const B of d){
+    if(T===A||T===B||A===B||!(A.cx<T.cx&&T.cx<B.cx))continue;
+    const dx=B.cx-A.cx,gap=((A.cy+B.cy)/2-T.cy)*aspect;      // compare in pixel-like units
+    if(Math.abs(A.cy-B.cy)*aspect>.15*dx||!(gap>.45*dx&&gap<1.05*dx))continue;
+    if(Math.abs(A.v+B.v-T.v)>1)continue;
+    const sc=-Math.abs(gap/dx-.73);if(!best||sc>best.sc)best={sc,T,A,B};
+  }
+  return best;
+}
+async function camAutoFind(){
+  if(!CAM.worker){toast('辨識引擎還在載入');return false}
+  while(CAM.busy)await new Promise(r=>setTimeout(r,150));
+  CAM.busy=true;camStatus('自動尋找數據欄…','busy');let found=false;
+  try{
+    for(let attempt=0;attempt<3&&!found;attempt++){
+      if(attempt)await new Promise(r=>setTimeout(r,700));
+      if(!camGrab())continue;
+      for(const T of[165,150,185,135]){
+        const{words,aspect}=await camFindWords(T),tr=camTriple(words,aspect);if(!tr)continue;
+        const pairs=[[RG_CENTER.total,[tr.T.cx,tr.T.cy]],[RG_CENTER.carry,[tr.A.cx,tr.A.cy]],[RG_CENTER.roll,[tr.B.cx,tr.B.cy]]];
+        let map=fitAffine(pairs);if(!map)continue;
+        const used=new Set([tr.T,tr.A,tr.B]),width=Math.hypot(...[0,1].map(i=>map(1,0)[i]-map(0,0)[i]));let extra=0;
+        for(const k of RG_EXTRA){const p=map(...RG_CENTER[k]);let bw=null,bd=.12*width;
+          for(const w of words){if(used.has(w))continue;const dd=Math.hypot(w.cx-p[0],(w.cy-p[1])*aspect);if(dd<bd){bd=dd;bw=w}}
+          if(bw){pairs.push([RG_CENTER[k],[bw.cx,bw.cy]]);used.add(bw);extra++}}
+        if(extra>=2){const m2=fitAffine(pairs);if(m2)map=m2}
+        const q=[[0,0],[1,0],[1,1],[0,1]].map(([u,v])=>map(u,v).map(x=>Math.min(1.15,Math.max(-.15,x))));
+        CAM.quad=q;CAM.hash={};camSaveQuad();found=true;break;
+      }
+    }
+  }catch(e){console.error(e)}
+  await camWL('num');CAM.busy=false;
+  if(found){await camTest(true)}
+  else camStatus('找不到數據欄。請在 RG 畫面顯示一球的結果時再按「自動尋找」，或直接拖曳圓點。','bad');
+  return found;
+}
 function camPointer(e){
   if(!CAM.calib)return;const b=camVideoBox(),r=camEl('cam-ov').getBoundingClientRect();
   const px=e.clientX-r.left,py=e.clientY-r.top;
   if(e.type==='pointerdown'){let best=-1,bd=40;CAM.quad.forEach((p,i)=>{const d=Math.hypot(b.x+p[0]*b.w-px,b.y+p[1]*b.h-py);if(d<bd){bd=d;best=i}});
     CAM.drag=best;if(best>=0){e.preventDefault();camEl('cam-ov').setPointerCapture(e.pointerId)}return}
   if(CAM.drag<0)return;e.preventDefault();
-  if(e.type==='pointermove'){CAM.quad[CAM.drag]=[Math.min(1,Math.max(0,(px-b.x)/b.w)),Math.min(1,Math.max(0,(py-b.y)/b.h))];CAM.hash={}}
+  if(e.type==='pointermove'){CAM.quad[CAM.drag]=[Math.min(1.15,Math.max(-.15,(px-b.x)/b.w)),Math.min(1.15,Math.max(-.15,(py-b.y)/b.h))];CAM.hash={}}
   else{CAM.drag=-1;camSaveQuad()}
 }
 
@@ -981,7 +1044,7 @@ async function camOpen(){
   camEl('cam').hidden=false;document.body.classList.add('cam-on');camPanel();camWarn('');
   camStatus(CAM.calib?'第一次使用：請先校正位置':'按「開始自動記錄」');
   try{await camStream()}catch(e){camStatus('無法開啟相機。請在瀏覽器設定允許此網站使用相機。','bad');return}
-  camDraw();camLoop();camWorker().then(()=>{if(!CAM.running)camStatus(CAM.calib?'拖曳四個圓點對準數據欄，再按「測試讀取」':'按「開始自動記錄」')}).catch(()=>camStatus('辨識引擎載入失敗，請確認網路','bad'));
+  camDraw();camLoop();camWorker().then(()=>{if(CAM.calib&&!localStorage.getItem(LS_QUAD))setTimeout(camAutoFind,800);else if(!CAM.running)camStatus(CAM.calib?'拖曳四個圓點對準數據欄，再按「測試讀取」':'按「開始自動記錄」')}).catch(()=>camStatus('辨識引擎載入失敗，請確認網路','bad'));
 }
 function camClose(){
   CAM.open=false;CAM.running=false;CAM.calib=false;clearTimeout(CAM.timer);cancelAnimationFrame(CAM.raf);
@@ -989,14 +1052,15 @@ function camClose(){
   try{CAM.wake&&CAM.wake.release()}catch(e){}CAM.wake=null;
   camEl('cam').hidden=true;document.body.classList.remove('cam-on');render();
 }
-async function camTest(){
+async function camTest(auto){
   if(!CAM.worker){toast('辨識引擎還在載入');return}
   if(CAM.busy){setTimeout(camTest,200);return}
   CAM.busy=true;camStatus('讀取中…');
   try{if(camGrab())for(const k in RG_FIELDS)await camRead(k,true);
     const miss=RG_KEY.filter(k=>CAM.vals[k]==null).map(k=>RG_LABEL[k]);
     const r={total:CAM.vals.total,carry:CAM.vals.carry,roll:CAM.vals.roll};
-    camStatus(miss.length?`讀不到：${miss.join('、')}，請調整圓點位置`:camValid(r)?'讀取正確，可以按「完成校正」':'數字對不上（落點＋滾動≠總距離），請微調位置',miss.length||!camValid(r)?'bad':'ok');
+    const pre=auto===true?'已自動找到位置。':'';
+    camStatus(pre+(miss.length?`讀不到：${miss.join('、')}，請拖曳圓點微調`:camValid(r)?'讀取正確，確認綠框框住數字後按「完成校正」':'數字對不上（落點＋滾動≠總距離），請拖曳圓點微調'),miss.length||!camValid(r)?'bad':'ok');
   }catch(e){camStatus('讀取失敗','bad')}
   CAM.busy=false;
 }
@@ -1008,6 +1072,7 @@ function camInit(){
     if(b.id==='cam-close'){camClose();return}
     if(b.id==='cam-calib'){CAM.calib=!CAM.calib;if(CAM.calib)CAM.running=false;else{camSaveQuad();camStatus('按「開始自動記錄」')}camPanel();return}
     if(b.id==='cam-test'){camTest();return}
+    if(b.id==='cam-auto'){camAutoFind();return}
     if(b.id==='cam-reset'){CAM.quad=camQuadDefault();CAM.hash={};return}
     if(b.id==='cam-run'){if(CAM.running){CAM.running=false;camStatus('已暫停');camPanel()}else camStart();return}
     if(b.id==='cam-undo'){const id=CAM.recent.shift();if(id&&D.shots[id]){deleteShot(id);toast('已撤銷上一球')}if(CAM.mismatch&&CAM.mismatch.id===id)CAM.mismatch=null,camWarn('');camPanel();return}
