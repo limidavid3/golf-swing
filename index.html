@@ -214,7 +214,13 @@ body.cam-on{overflow:hidden}
 .cam-stage{position:relative;flex:1;min-height:0}
 .cam-stage video,.cam-stage canvas{position:absolute;inset:0;width:100%;height:100%}
 .cam-stage video{object-fit:contain}
+.cam-stage{overflow:hidden}
 .cam-stage canvas{touch-action:none}
+.cam-zoom{position:absolute;top:8px;right:8px;display:flex;gap:4px;z-index:2}
+.cam-zoom button{min-width:40px;height:36px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.55);color:#fff;font-size:18px;font-weight:600;padding:0 8px}
+.cam-zoom #cam-zreset{font-size:13px;font-variant-numeric:tabular-nums}
+.cam-lens{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#E4ECE6}
+.cam-lens input{width:100%;accent-color:#F0C23A}
 .cam-bar{background:#0E1511;padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;max-height:48%;overflow-y:auto}
 .cam-calibbar p{margin:0;font-size:13px;line-height:1.5;color:#E4ECE6}
 .cam-clubs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
@@ -283,9 +289,11 @@ textarea{width:100%;min-height:120px;font:12px/1.4 ui-monospace,Menlo,monospace;
 <div id="toast" class="toast" hidden></div>
 <div id="cam" class="cam" hidden>
   <div class="cam-top"><button id="cam-close" class="x" type="button">關閉</button><div id="cam-status" class="cam-status"></div><button id="cam-calib" class="x" type="button">校正</button></div>
-  <div class="cam-stage" id="cam-stage"><video id="cam-video" playsinline muted autoplay></video><canvas id="cam-ov"></canvas></div>
+  <div class="cam-stage" id="cam-stage"><video id="cam-video" playsinline muted autoplay></video><canvas id="cam-ov"></canvas>
+    <div class="cam-zoom"><button type="button" id="cam-zout" aria-label="縮小畫面">−</button><button type="button" id="cam-zreset" aria-label="還原畫面大小"><span id="cam-zval">1.0×</span></button><button type="button" id="cam-zin" aria-label="放大畫面">+</button></div></div>
   <div class="cam-bar">
-    <div id="cam-calibbar" class="cam-calibbar" hidden><p>先在 RG 畫面顯示一球的結果時按「自動尋找」，找到後再拖曳圓點微調。四個黃色圓點對應 RG 數據欄的四個角：上緣對齊有名字的那一列頂端，下緣對齊「倒旋／側旋」那一列底部。綠框要框住數字。</p>
+    <div id="cam-calibbar" class="cam-calibbar" hidden><p>先在 RG 畫面顯示一球的結果時按「自動尋找」，找到後再拖曳圓點微調。可以用兩指縮放、單指拖曳畫面，或按右上角的 ＋／− 放大。四個黃色圓點對應 RG 數據欄的四個角：上緣對齊有名字的那一列頂端，下緣對齊「倒旋／側旋」那一列底部。綠框要框住數字。</p>
+      <div id="cam-lens" class="cam-lens" hidden><label for="cam-lens-in">鏡頭變焦 <b id="cam-lens-val">1.0×</b></label><input type="range" id="cam-lens-in" min="1" max="1" step="0.1" value="1"></div>
       <div class="cam-btns three"><button id="cam-auto" class="btn" type="button">自動尋找</button><button id="cam-test" class="btn ghost" type="button">測試讀取</button><button id="cam-reset" class="btn ghost" type="button">重設位置</button></div></div>
     <div class="cam-clubs" id="cam-clubs"></div>
     <div class="cam-row"><select id="cam-swing" aria-label="揮法"></select><select id="cam-face" aria-label="桿面"></select></div>
@@ -760,7 +768,7 @@ const RG_KEY=['shots','total','carry','roll'], RG_EXTRA=['cs','bs','sf','la','bs
 const RG_LABEL={shots:'擊球數',total:'總距離',carry:'落點',roll:'滾動',cs:'桿頭速度',bs:'球速',sf:'擊球效率',la:'起飛角度',bsp:'倒旋',ssp:'側旋',club:'球桿'};
 const LS_QUAD='yardbook-cam-quad';
 const CAM={open:false,running:false,calib:false,stream:null,worker:null,wl:'',busy:false,quad:null,drag:-1,
-  state:'idle',base:null,pend:null,pendN:0,track:null,lastRec:null,vals:{},hash:{},recent:[],mismatch:null,
+  view:{z:1,cx:.5,cy:.5},pan:null,pinch:null,lens:null,state:'idle',base:null,pend:null,pendN:0,track:null,lastRec:null,vals:{},hash:{},recent:[],mismatch:null,
   timer:null,raf:0,wake:null,audio:null,frame:null,lastOk:0};
 
 function camQuadDefault(){return[[.15,.1],[.62,.1],[.62,.62],[.15,.62]]}
@@ -971,10 +979,21 @@ async function camLoop(){
 }
 
 /* --- overlay drawing & calibration handles --- */
-function camVideoBox(){const v=camEl('cam-video'),st=camEl('cam-stage');const W=st.clientWidth,H=st.clientHeight,vw=v.videoWidth||16,vh=v.videoHeight||9;
+// Base (fit-to-screen) box of the video inside the stage.
+function camBaseBox(){const v=camEl('cam-video'),st=camEl('cam-stage');const W=st.clientWidth,H=st.clientHeight,vw=v.videoWidth||16,vh=v.videoHeight||9;
   const s=Math.min(W/vw,H/vh);return{x:(W-vw*s)/2,y:(H-vh*s)/2,w:vw*s,h:vh*s,W,H}}
+// Displayed box after the on-screen zoom (pinch / buttons). Zoom only changes the view; readings use the full camera frame.
+function camVideoBox(){const b=camBaseBox(),V=CAM.view||{z:1,cx:.5,cy:.5},w=b.w*V.z,h=b.h*V.z;
+  return{x:b.x+b.w/2-V.cx*w,y:b.y+b.h/2-V.cy*h,w,h,W:b.W,H:b.H,base:b}}
+function camClampView(){const V=CAM.view;V.z=Math.min(6,Math.max(1,V.z));const m=.5/V.z;V.cx=Math.min(1-m+.15,Math.max(m-.15,V.cx));V.cy=Math.min(1-m+.15,Math.max(m-.15,V.cy));if(V.z===1){V.cx=.5;V.cy=.5}}
+function camApplyView(){const b=camVideoBox(),v=camEl('cam-video');
+  v.style.transformOrigin='0 0';v.style.transform=`translate(${b.x-b.base.x*(b.w/b.base.w)}px,${b.y-b.base.y*(b.h/b.base.h)}px) scale(${b.w/b.base.w})`;
+  const z=camEl('cam-zval');if(z)z.textContent=CAM.view.z.toFixed(1)+'×'}
+// zoom by factor f keeping the screen point (sx,sy) fixed
+function camZoomAt(f,sx,sy){const b=camVideoBox(),u=(sx-b.x)/b.w,v=(sy-b.y)/b.h,V=CAM.view;const z0=V.z;V.z=Math.min(6,Math.max(1,z0*f));
+  const nw=b.base.w*V.z,nh=b.base.h*V.z;V.cx=(b.base.x+b.base.w/2-sx)/nw+u;V.cy=(b.base.y+b.base.h/2-sy)/nh+v;camClampView();camApplyView()}
 function camDraw(){
-  if(!CAM.open)return;CAM.raf=requestAnimationFrame(camDraw);
+  if(!CAM.open)return;CAM.raf=requestAnimationFrame(camDraw);camApplyView();
   const cv=camEl('cam-ov'),b=camVideoBox(),dpr=window.devicePixelRatio||1;
   if(cv.width!==Math.round(b.W*dpr)||cv.height!==Math.round(b.H*dpr)){cv.width=Math.round(b.W*dpr);cv.height=Math.round(b.H*dpr)}
   const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,b.W,b.H);
@@ -1048,14 +1067,49 @@ async function camAutoFind(){
   else camStatus('找不到數據欄。請在 RG 畫面顯示一球的結果時再按「自動尋找」，或直接拖曳圓點。','bad');
   return found;
 }
+const CAMP=new Map();
 function camPointer(e){
-  if(!CAM.calib)return;const b=camVideoBox(),r=camEl('cam-ov').getBoundingClientRect();
-  const px=e.clientX-r.left,py=e.clientY-r.top;
-  if(e.type==='pointerdown'){let best=-1,bd=40;CAM.quad.forEach((p,i)=>{const d=Math.hypot(b.x+p[0]*b.w-px,b.y+p[1]*b.h-py);if(d<bd){bd=d;best=i}});
-    CAM.drag=best;if(best>=0){e.preventDefault();camEl('cam-ov').setPointerCapture(e.pointerId)}return}
-  if(CAM.drag<0)return;e.preventDefault();
-  if(e.type==='pointermove'){CAM.quad[CAM.drag]=[Math.min(1.15,Math.max(-.15,(px-b.x)/b.w)),Math.min(1.15,Math.max(-.15,(py-b.y)/b.h))];CAM.hash={}}
-  else{CAM.drag=-1;camSaveQuad()}
+  const ov=camEl('cam-ov'),r=ov.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top,b=camVideoBox();
+  if(e.type==='pointerdown'){
+    e.preventDefault();try{ov.setPointerCapture(e.pointerId)}catch(_){}
+    CAMP.set(e.pointerId,{x:px,y:py});
+    if(CAMP.size===2){CAM.drag=-1;CAM.pan=null;const[a,c]=[...CAMP.values()];CAM.pinch={d:Math.hypot(a.x-c.x,a.y-c.y)||1,mx:(a.x+c.x)/2,my:(a.y+c.y)/2};return}
+    if(CAMP.size>2)return;
+    let best=-1;if(CAM.calib){let bd=44;CAM.quad.forEach((p,i)=>{const d=Math.hypot(b.x+p[0]*b.w-px,b.y+p[1]*b.h-py);if(d<bd){bd=d;best=i}})}
+    CAM.drag=best;CAM.pan=best<0&&CAM.view.z>1?{x:px,y:py}:null;return}
+  if(!CAMP.has(e.pointerId))return;e.preventDefault();
+  if(e.type==='pointermove'){
+    CAMP.set(e.pointerId,{x:px,y:py});
+    if(CAMP.size>=2&&CAM.pinch){const[a,c]=[...CAMP.values()];const d=Math.hypot(a.x-c.x,a.y-c.y)||1,mx=(a.x+c.x)/2,my=(a.y+c.y)/2;
+      camZoomAt(d/CAM.pinch.d,mx,my);const b2=camVideoBox();CAM.view.cx-=(mx-CAM.pinch.mx)/b2.w;CAM.view.cy-=(my-CAM.pinch.my)/b2.h;camClampView();camApplyView();
+      CAM.pinch={d,mx,my};return}
+    if(CAM.drag>=0){CAM.quad[CAM.drag]=[Math.min(1.15,Math.max(-.15,(px-b.x)/b.w)),Math.min(1.15,Math.max(-.15,(py-b.y)/b.h))];CAM.hash={};return}
+    if(CAM.pan){CAM.view.cx-=(px-CAM.pan.x)/b.w;CAM.view.cy-=(py-CAM.pan.y)/b.h;CAM.pan={x:px,y:py};camClampView();camApplyView()}
+    return}
+  // up / cancel
+  CAMP.delete(e.pointerId);
+  if(CAM.drag>=0&&CAMP.size===0){camSaveQuad()}
+  if(CAMP.size<2)CAM.pinch=null;
+  if(CAMP.size===0){CAM.drag=-1;CAM.pan=null}
+  else if(CAMP.size===1){const[p]=[...CAMP.values()];CAM.pan=CAM.view.z>1?{x:p.x,y:p.y}:null}
+}
+function camWheel(e){e.preventDefault();const r=camEl('cam-ov').getBoundingClientRect();camZoomAt(e.deltaY<0?1.15:1/1.15,e.clientX-r.left,e.clientY-r.top)}
+/* camera (lens) zoom, when the phone allows it: gives the numbers more pixels. Saved with the calibration. */
+const LS_LENS='yardbook-cam-lens';
+async function camLensSetup(){
+  const el=camEl('cam-lens');el.hidden=true;CAM.lens=null;
+  const tr=CAM.stream&&CAM.stream.getVideoTracks()[0];if(!tr||!tr.getCapabilities)return;
+  let cap;try{cap=tr.getCapabilities()}catch(e){return}
+  if(!cap||!cap.zoom||!(cap.zoom.max>cap.zoom.min))return;
+  CAM.lens={tr,min:cap.zoom.min,max:cap.zoom.max,step:cap.zoom.step||.1};
+  const inp=camEl('cam-lens-in');inp.min=cap.zoom.min;inp.max=cap.zoom.max;inp.step=CAM.lens.step;
+  let z=cap.zoom.min;try{const sv=parseFloat(localStorage.getItem(LS_LENS));if(sv>=cap.zoom.min&&sv<=cap.zoom.max)z=sv}catch(e){}
+  await camLensApply(z,false);el.hidden=false;
+}
+async function camLensApply(z,save){
+  if(!CAM.lens)return;try{await CAM.lens.tr.applyConstraints({advanced:[{zoom:z}]})}catch(e){}
+  camEl('cam-lens-in').value=z;camEl('cam-lens-val').textContent=(+z).toFixed(1)+'×';CAM.hash={};
+  if(save){try{localStorage.setItem(LS_LENS,String(z))}catch(e){}}
 }
 
 /* --- panel (clubs, swing, recent shots) --- */
@@ -1090,9 +1144,10 @@ async function camStream(){
   const v=camEl('cam-video');
   CAM.stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}});
   v.srcObject=CAM.stream;await v.play().catch(()=>{});
+  camLensSetup().catch(()=>{});
 }
 async function camOpen(){
-  CAM.open=true;CAM.quad=camLoadQuad();CAM.calib=!localStorage.getItem(LS_QUAD);CAM.vals={};CAM.hash={};CAM.mismatch=null;
+  CAM.open=true;CAM.view={z:1,cx:.5,cy:.5};CAM.quad=camLoadQuad();CAM.calib=!localStorage.getItem(LS_QUAD);CAM.vals={};CAM.hash={};CAM.mismatch=null;
   camEl('cam').hidden=false;document.body.classList.add('cam-on');camPanel();camWarn('');
   camStatus(CAM.calib?'第一次使用：請先校正位置':'按「開始自動記錄」');
   try{await camStream()}catch(e){camStatus('無法開啟相機。請在瀏覽器設定允許此網站使用相機。','bad');return}
@@ -1120,8 +1175,14 @@ document.addEventListener('visibilitychange',()=>{if(CAM.open&&document.visibili
   if(!CAM.stream||CAM.stream.getVideoTracks().every(t=>t.readyState==='ended'))camStream().catch(()=>{});else v.play().catch(()=>{})}});
 function camInit(){
   const ov=camEl('cam-ov');['pointerdown','pointermove','pointerup','pointercancel'].forEach(t=>ov.addEventListener(t,camPointer));
+  ov.addEventListener('wheel',camWheel,{passive:false});
+  ['gesturestart','gesturechange'].forEach(t=>camEl('cam').addEventListener(t,e=>e.preventDefault()));   // keep Safari from zooming the whole page
+  camEl('cam-lens-in').addEventListener('input',e=>camLensApply(+e.target.value,false));
+  camEl('cam-lens-in').addEventListener('change',e=>{camLensApply(+e.target.value,true);if(CAM.calib)camStatus('變焦改變了，請按「自動尋找」或重新對準圓點','busy')});
   camEl('cam').addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
     if(b.id==='cam-close'){camClose();return}
+    if(b.id==='cam-zin'||b.id==='cam-zout'){const bb=camVideoBox();camZoomAt(b.id==='cam-zin'?1.4:1/1.4,bb.W/2,bb.H/2);return}
+    if(b.id==='cam-zreset'){CAM.view={z:1,cx:.5,cy:.5};camApplyView();return}
     if(b.id==='cam-calib'){CAM.calib=!CAM.calib;if(CAM.calib)CAM.running=false;else{camSaveQuad();camStatus('按「開始自動記錄」')}camPanel();return}
     if(b.id==='cam-test'){camTest();return}
     if(b.id==='cam-auto'){camAutoFind();return}
