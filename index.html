@@ -221,16 +221,25 @@ body.cam-on{overflow:hidden}
 .cam-zoom #cam-zreset{font-size:13px;font-variant-numeric:tabular-nums}
 .cam-lens{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#E4ECE6}
 .cam-lens input{width:100%;accent-color:#F0C23A}
-.cam-bar{background:#0E1511;padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;max-height:48%;overflow-y:auto}
+.cam-bar{background:#0E1511;padding:8px 12px 10px;display:flex;flex-direction:column;gap:8px;max-height:55%;overflow-y:auto;flex:0 0 auto}
 .cam-calibbar p{margin:0;font-size:13px;line-height:1.5;color:#E4ECE6}
-.cam-clubs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
-.cam-clubs .chip{flex:0 0 auto;min-width:50px;padding:6px 8px;font-size:17px;background:#16201A;border-color:#29372E;color:#E4ECE6}
+.cam-clubs{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cam-clubs .chip{min-width:0;padding:9px 0;font-size:17px;background:#16201A;border-color:#29372E;color:#E4ECE6}
 .cam-clubs .chip[aria-pressed="true"]{background:#4FA374;border-color:#4FA374;color:#0B130E}
 .cam-row{display:flex;gap:8px}
+.cam-swings,.cam-faces{display:grid;gap:6px}
+.cam-faces{grid-template-columns:repeat(3,1fr)}
+.cam-swings .chip,.cam-faces .chip{min-width:0;padding:8px 2px;font-family:var(--body);font-size:14px;font-weight:600;background:#16201A;border-color:#29372E;color:#E4ECE6;white-space:nowrap}
+.cam-swings .chip[aria-pressed="true"]{background:#F0C23A;border-color:#F0C23A;color:#241A00}
+.cam-faces .chip[aria-pressed="true"]{background:#E4ECE6;border-color:#E4ECE6;color:#0B130E}
 .cam-row select{flex:1;font:inherit;font-size:15px;padding:7px 8px;border-radius:8px;border:1px solid #29372E;background:#16201A;color:#E4ECE6}
 .cam-warn{font-size:13px;line-height:1.5;background:#3A2A06;border:1px solid #F0C23A;border-radius:10px;padding:8px 10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .cam-warn .btn{padding:5px 10px;font-size:13px}
-.cam-live{font-size:12px;color:#93A198;font-variant-numeric:tabular-nums;min-height:1em}
+.cam-live{position:absolute;left:8px;top:8px;z-index:2;font-size:11.5px;color:#E4ECE6;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:8px;font-variant-numeric:tabular-nums;max-width:calc(100% - 150px)}
+.cam-hist{position:absolute;left:8px;right:8px;bottom:8px;z-index:2;background:rgba(10,16,12,.78);border:1px solid rgba(255,255,255,.15);border-radius:12px;overflow:hidden}
+.cam-histhead{display:flex;align-items:baseline;gap:8px;width:100%;border:0;background:transparent;color:#fff;padding:7px 10px;text-align:left;font-variant-numeric:tabular-nums}
+.cr-more{margin-left:auto;font-size:12px;color:#F0C23A;white-space:nowrap}
+.cam-hist .cam-recent{max-height:30vh;overflow-y:auto;padding:0 10px;border-bottom:1px solid rgba(255,255,255,.12)}
 .cam-recent{list-style:none;margin:0;padding:0;font-variant-numeric:tabular-nums}
 .cam-recent li{display:flex;align-items:baseline;gap:8px;padding:5px 0;border-top:1px solid #29372E;font-size:14px}
 .cam-recent li:first-child{border-top:0}
@@ -290,16 +299,17 @@ textarea{width:100%;min-height:120px;font:12px/1.4 ui-monospace,Menlo,monospace;
 <div id="cam" class="cam" hidden>
   <div class="cam-top"><button id="cam-close" class="x" type="button">關閉</button><div id="cam-status" class="cam-status"></div><button id="cam-calib" class="x" type="button">校正</button></div>
   <div class="cam-stage" id="cam-stage"><video id="cam-video" playsinline muted autoplay></video><canvas id="cam-ov"></canvas>
-    <div class="cam-zoom"><button type="button" id="cam-zout" aria-label="縮小畫面">−</button><button type="button" id="cam-zreset" aria-label="還原畫面大小"><span id="cam-zval">1.0×</span></button><button type="button" id="cam-zin" aria-label="放大畫面">+</button></div></div>
+    <div class="cam-zoom"><button type="button" id="cam-zout" aria-label="縮小畫面">−</button><button type="button" id="cam-zreset" aria-label="還原畫面大小"><span id="cam-zval">1.0×</span></button><button type="button" id="cam-zin" aria-label="放大畫面">+</button></div>
+    <div id="cam-live" class="cam-live"></div>
+    <div class="cam-hist" id="cam-hist"><ul id="cam-recent" class="cam-recent" hidden></ul><button type="button" id="cam-histbtn" class="cam-histhead"></button></div></div>
   <div class="cam-bar">
     <div id="cam-calibbar" class="cam-calibbar" hidden><p>先在 RG 畫面顯示一球的結果時按「自動尋找」，找到後再拖曳圓點微調。可以用兩指縮放、單指拖曳畫面，或按右上角的 ＋／− 放大。四個黃色圓點對應 RG 數據欄的四個角：上緣對齊有名字的那一列頂端，下緣對齊「倒旋／側旋」那一列底部。綠框要框住數字。</p>
       <div id="cam-lens" class="cam-lens" hidden><label for="cam-lens-in">鏡頭變焦 <b id="cam-lens-val">1.0×</b></label><input type="range" id="cam-lens-in" min="1" max="1" step="0.1" value="1"></div>
       <div class="cam-btns three"><button id="cam-auto" class="btn" type="button">自動尋找</button><button id="cam-test" class="btn ghost" type="button">測試讀取</button><button id="cam-reset" class="btn ghost" type="button">重設位置</button></div></div>
-    <div class="cam-clubs" id="cam-clubs"></div>
-    <div class="cam-row"><select id="cam-swing" aria-label="揮法"></select><select id="cam-face" aria-label="桿面"></select></div>
-    <div id="cam-live" class="cam-live"></div>
     <div id="cam-warn" class="cam-warn" hidden></div>
-    <ul id="cam-recent" class="cam-recent"></ul>
+    <div class="cam-clubs" id="cam-clubs"></div>
+    <div class="cam-swings" id="cam-swing" role="group" aria-label="揮法"></div>
+    <div class="cam-faces" id="cam-face" role="group" aria-label="桿面"></div>
     <div class="cam-btns"><button id="cam-undo" class="btn ghost" type="button">撤銷上一球</button><button id="cam-run" class="btn" type="button">開始自動記錄</button></div>
   </div>
 </div>
@@ -1115,16 +1125,23 @@ async function camLensApply(z,save){
 /* --- panel (clubs, swing, recent shots) --- */
 const r1=v=>(Math.round(toDisp(v)*10)/10).toFixed(1);
 function camLive(){const el=camEl('cam-live');if(!el)return;const v=CAM.vals,f=x=>x==null?'—':x;
-  el.textContent=CAM.running?`畫面讀到：總距離 ${f(v.total)}・落點 ${f(v.carry)}・滾動 ${f(v.roll)}・擊球數 ${f(v.shots)}`:''}
+  el.hidden=!CAM.running;el.textContent=CAM.running?`讀到 總 ${f(v.total)}・落 ${f(v.carry)}・滾 ${f(v.roll)}`:''}
 function camPanel(){
   if(!CAM.open)return;
   camEl('cam-clubs').innerHTML=S.clubs.map(c=>`<button class="chip" data-camclub="${esc(c)}" aria-pressed="${c===S.sel.club}">${esc(c)}</button>`).join('');
-  const sw=camEl('cam-swing');sw.innerHTML=swingsFor(S.sel.club).map(x=>`<option value="${x.k}" ${x.k===S.sel.swing?'selected':''}>${x.n}</option>`).join('');
-  const fc=camEl('cam-face');fc.hidden=!isWedge(S.sel.club);fc.innerHTML=facesFor(S.sel.club).map(f=>`<option value="${f}" ${f===S.sel.face?'selected':''}>${FACES[f]}</option>`).join('');
+  const list=swingsFor(S.sel.club),sw=camEl('cam-swing');
+  sw.style.gridTemplateColumns=`repeat(${list.length>5?5:list.length},1fr)`;
+  sw.innerHTML=list.map(x=>`<button type="button" class="chip sw" data-camswing="${x.k}" aria-pressed="${x.k===S.sel.swing}">${x.n}</button>`).join('');
+  const fc=camEl('cam-face');fc.hidden=!isWedge(S.sel.club);
+  fc.innerHTML=facesFor(S.sel.club).map(f=>`<button type="button" class="chip fc" data-camface="${f}" aria-pressed="${f===S.sel.face}">${FACES[f]}</button>`).join('');
   const shots=CAM.recent.map(id=>D.shots[id]).filter(Boolean).slice(0,5);
-  camEl('cam-recent').innerHTML=shots.length?shots.map(s=>`<li><span class="cr-c">${esc(s.club)}</span><span class="cr-s">${swName(s.swing)}${faceTag(faceOf(s))}</span>
-    <span class="cr-n">${r1(s.carry)} <small>+${r1(s.roll)}</small> = <b>${r1(s.carry+s.roll)}</b></span></li>`).join('')
-    :`<li class="cr-empty">${CAM.running?'打完一球、數字停住後會自動記錄在這裡。':'選好球桿後按「開始自動記錄」。'}</li>`;
+  const row=s=>`<span class="cr-c">${esc(s.club)}</span><span class="cr-s">${swName(s.swing)}${faceTag(faceOf(s))}</span>
+    <span class="cr-n">${r1(s.carry)} <small>+${r1(s.roll)}</small> = <b>${r1(s.carry+s.roll)}</b></span>`;
+  // history stays one line over the bottom of the camera view; tap it to see the last 5 shots
+  const all=CAM.recent.map(id=>D.shots[id]).filter(Boolean);
+  camEl('cam-hist').hidden=CAM.calib||!all.length;
+  camEl('cam-histbtn').innerHTML=all.length?`${row(all[0])}<span class="cr-more">${all.length>1?(CAM.histOpen?'收起':`前 ${Math.min(all.length,5)} 球`):''}</span>`:'';
+  const ul=camEl('cam-recent');ul.hidden=!CAM.histOpen||all.length<2;ul.innerHTML=shots.slice(1).map(s=>`<li>${row(s)}</li>`).join('');
   camEl('cam-undo').disabled=!shots.length;
   const run=camEl('cam-run');run.textContent=CAM.running?'暫停':'開始自動記錄';run.className='btn'+(CAM.running?' ghost':'');run.disabled=CAM.calib;
   camEl('cam-calib').textContent=CAM.calib?'完成校正':'校正';
@@ -1181,6 +1198,7 @@ function camInit(){
   camEl('cam-lens-in').addEventListener('change',e=>{camLensApply(+e.target.value,true);if(CAM.calib)camStatus('變焦改變了，請按「自動尋找」或重新對準圓點','busy')});
   camEl('cam').addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
     if(b.id==='cam-close'){camClose();return}
+    if(b.id==='cam-histbtn'){CAM.histOpen=!CAM.histOpen;camPanel();return}
     if(b.id==='cam-zin'||b.id==='cam-zout'){const bb=camVideoBox();camZoomAt(b.id==='cam-zin'?1.4:1/1.4,bb.W/2,bb.H/2);return}
     if(b.id==='cam-zreset'){CAM.view={z:1,cx:.5,cy:.5};camApplyView();return}
     if(b.id==='cam-calib'){CAM.calib=!CAM.calib;if(CAM.calib)CAM.running=false;else{camSaveQuad();camStatus('按「開始自動記錄」')}camPanel();return}
@@ -1189,14 +1207,15 @@ function camInit(){
     if(b.id==='cam-reset'){CAM.quad=camQuadDefault();CAM.hash={};return}
     if(b.id==='cam-run'){if(CAM.running){CAM.running=false;camStatus('已暫停');camPanel()}else camStart();return}
     if(b.id==='cam-undo'){const id=CAM.recent.shift();if(id&&D.shots[id]){deleteShot(id);toast('已撤銷上一球')}if(CAM.mismatch&&CAM.mismatch.id===id)CAM.mismatch=null,camWarn('');camPanel();return}
+    if(d.camswing){S.sel.swing=d.camswing;render();camPanel();return}
+    if(d.camface){S.sel.face=d.camface;render();camPanel();return}
     if(d.camclub!==undefined){S.sel.club=d.camclub;fixSel();render();camPanel();return}
     if(d.camfix!==undefined){const mm=CAM.mismatch;CAM.mismatch=null;camWarn('');
       if(mm&&d.camfix!=='-'&&D.shots[mm.id]){if(d.camfix){S.sel.club=d.camfix;fixSel()}
         D.shots[mm.id]=Object.assign({},D.shots[mm.id],{club:S.sel.club,swing:S.sel.swing,face:S.sel.face,open:S.sel.face==='open',u:Date.now()});rebuild();changed();toast(`上一球已改成 ${S.sel.club}`)}
       render();camPanel();return}
   });
-  camEl('cam-swing').addEventListener('change',e=>{S.sel.swing=e.target.value;render()});
-  camEl('cam-face').addEventListener('change',e=>{S.sel.face=e.target.value;render()});
+
 }
 
 /* ---------- render & events ---------- */
